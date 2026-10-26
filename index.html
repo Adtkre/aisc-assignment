@@ -3,95 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Autonomous Minesweeper with Hill-Climbing Constraint Solver, Bento Dashboard UI, and Live Telemetry.">
-  <title>Minesweeper Lab • Hill-Climbing Solver</title>
+  <meta name="description" content="Autonomous Minesweeper with Hill-Climbing Constraint Solver, Windows 7 Aero Dashboard UI, and Live Telemetry.">
+  <title>Minesweeper • Windows 7 Aero Hill-Climbing Solver</title>
   
-  <!-- Typography: Plus Jakarta Sans -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
   <style>
     /* ==========================================================================
-       SECTION 1: COLOR TOKENS & DESIGN SYSTEM (BENTO DASHBOARD)
+       SECTION 1: COLOR TOKENS & WINDOWS 7 AERO DESIGN SYSTEM
        ========================================================================== */
     :root {
-      /* Palette Tokens */
-      --bg: #F1F3F0;
-      --surface: #FFFFFF;
-      --surface-subtle: #F8FAF8;
-      --surface-border: rgba(20, 34, 27, 0.08);
-      --surface-border-subtle: rgba(20, 34, 27, 0.04);
-      --ink: #14221B;
-      --ink-muted: #7A877F;
-      --ink-subtle: #A3AEA7;
-      --forest: #1F6B47;
-      --forest-hover: #185538;
-      --forest-deep: #0F3D2A;
-      --mint: #7FCBA0;
-      --mint-pale: #E3F2EA;
-      --amber: #E0912F;
-      --amber-pale: #FDF3E7;
-      --coral: #D9534F;
-      --coral-pale: #FCEBEA;
+      /* Windows 7 Aero Desktop Gradient */
+      --win7-desktop-top: #d2e4f6;
+      --win7-desktop-mid: #b8d4f0;
+      --win7-desktop-bot: #92bce6;
 
-      /* Cell Tokens */
-      --cell-hidden-bg: #E8ECE8;
-      --cell-hidden-hatch: rgba(122, 135, 127, 0.14);
-      --cell-revealed-bg: #FFFFFF;
-      --cell-zero-bg: #F1F4F1;
-      --cell-border: rgba(20, 34, 27, 0.07);
+      /* Classic Minesweeper Grays */
+      --ms-gray: #c0c0c0;
+      --ms-gray-light: #e0e0e0;
+      --ms-gray-dark: #7b7b7b;
+      --ms-gray-shadow: #808080;
+      --ms-white: #ffffff;
+      --ms-black: #000000;
 
-      /* Number Palette: Green-to-Teal for 1-3, Amber for 4-5, Coral for 6-8 */
-      --num-1: #1F6B47;
-      --num-2: #248256;
-      --num-3: #127976;
-      --num-4: #C97D1E;
-      --num-5: #E0912F;
-      --num-6: #D9534F;
-      --num-7: #B93D39;
-      --num-8: #8A2220;
+      /* Windows 7 Aero Glass Windows */
+      --surface: rgba(255, 255, 255, 0.88);
+      --surface-header: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(235, 244, 253, 0.9) 100%);
+      --surface-subtle: #f0f5fb;
+      --surface-border: #7aa1c7;
+      --surface-border-subtle: #a8c4e0;
+      --shadow-aero: 0 8px 24px rgba(24, 60, 105, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
 
-      /* Bento Shadows & Radii */
-      --card-radius: 22px;
-      --card-radius-sm: 14px;
-      --pill-radius: 9999px;
-      --shadow-bento: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(15, 61, 42, 0.06);
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-      --shadow-float: 0 12px 32px rgba(15, 61, 42, 0.12);
+      /* Typography & Aero Colors */
+      --ink: #10263f;
+      --ink-muted: #4b6685;
+      --ink-subtle: #7995b5;
+      --aero-blue: #0078d7;
+      --aero-blue-hover: #1e8ee8;
+      --aero-blue-dark: #005a9e;
+      --aero-blue-pale: #e6f2fb;
 
-      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      --transition-base: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-    }
+      /* Status Colors */
+      --amber: #d97706;
+      --amber-pale: #fffbeb;
+      --coral: #cc0000;
+      --coral-pale: #fee2e2;
+      --forest: #008000;
+      --forest-pale: #ecfdf5;
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0C1511;
-        --surface: #14211A;
-        --surface-subtle: #182820;
-        --surface-border: rgba(255, 255, 255, 0.08);
-        --surface-border-subtle: rgba(255, 255, 255, 0.04);
-        --ink: #E8EFEA;
-        --ink-muted: #94A39B;
-        --ink-subtle: #617068;
-        --forest: #29865A;
-        --forest-hover: #329D6B;
-        --forest-deep: #0B2519;
-        --mint: #8FE0B1;
-        --mint-pale: #1A3326;
-        --amber: #EBA545;
-        --amber-pale: #30200E;
-        --coral: #E56B67;
-        --coral-pale: #331514;
+      /* Classic Minesweeper Cell Numbers (Exact Windows Colors) */
+      --num-1: #0000ff; /* 1 = Blue */
+      --num-2: #008000; /* 2 = Green */
+      --num-3: #ff0000; /* 3 = Red */
+      --num-4: #000080; /* 4 = Dark Navy */
+      --num-5: #800000; /* 5 = Maroon */
+      --num-6: #008080; /* 6 = Teal */
+      --num-7: #000000; /* 7 = Black */
+      --num-8: #808080; /* 8 = Gray */
 
-        --cell-hidden-bg: #1B2C23;
-        --cell-hidden-hatch: rgba(143, 224, 177, 0.08);
-        --cell-revealed-bg: #131E18;
-        --cell-zero-bg: #0E1813;
-        --cell-border: rgba(255, 255, 255, 0.06);
-
-        --shadow-bento: 0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35);
-      }
+      /* Classic Windows Dimensions & Fonts */
+      --card-radius: 8px;
+      --card-radius-sm: 5px;
+      --pill-radius: 4px;
+      --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif;
+      --font-digital: 'Consolas', 'Courier New', monospace;
+      --transition-base: 0.15s ease;
     }
 
     * {
@@ -103,14 +77,15 @@
     }
 
     body {
-      background-color: var(--bg);
+      background: radial-gradient(circle at 50% 12%, #dbeaf9 0%, #bdd7f2 40%, #9cbfe8 100%);
+      background-attachment: fixed;
       color: var(--ink);
       font-family: var(--font-family);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px 16px 64px;
+      padding: 20px 16px 56px;
       overflow-x: hidden;
       line-height: 1.5;
     }
@@ -123,7 +98,7 @@
 
     /* Focus rings */
     button:focus-visible, input:focus-visible, select:focus-visible {
-      outline: 2px solid var(--forest);
+      outline: 2px solid var(--aero-blue);
       outline-offset: 2px;
     }
 
@@ -133,32 +108,43 @@
       max-width: 1280px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
-    /* Bento Card Primitive */
+    /* Windows 7 Aero Window Card */
     .bento-card {
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: var(--card-radius);
-      box-shadow: var(--shadow-bento);
-      padding: 20px;
+      box-shadow: var(--shadow-aero), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      padding: 16px 18px;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(10px);
       transition: border-color var(--transition-base), box-shadow var(--transition-base);
+    }
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
     }
 
     .card-header-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       gap: 8px;
     }
 
     .card-title {
-      font-size: 15px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 700;
       color: var(--ink);
       letter-spacing: -0.01em;
       display: flex;
@@ -167,51 +153,32 @@
     }
 
     .card-title-sub {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 400;
       color: var(--ink-muted);
     }
 
-    /* Circular icon button */
-    .icon-btn-round {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--surface-subtle);
-      border: 1px solid var(--surface-border);
-      color: var(--ink-muted);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all var(--transition-base);
-    }
-    .icon-btn-round:hover {
-      color: var(--ink);
-      background: var(--mint-pale);
-      border-color: var(--mint);
-    }
-
-    /* Chips */
+    /* Chips & Badges */
     .pill-chip {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      padding: 3px 10px;
-      border-radius: var(--pill-radius);
+      padding: 3px 9px;
+      border-radius: 3px;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      background: var(--surface-subtle);
-      border: 1px solid var(--surface-border);
+      background: #eef4fb;
+      border: 1px solid #b3ceea;
       color: var(--ink-muted);
     }
-    .pill-chip.mint { background: var(--mint-pale); border-color: var(--mint); color: var(--forest); }
-    .pill-chip.amber { background: var(--amber-pale); border-color: var(--amber); color: var(--amber); }
-    .pill-chip.coral { background: var(--coral-pale); border-color: var(--coral); color: var(--coral); }
-    .pill-chip.forest { background: var(--forest-deep); border-color: var(--forest); color: #FFFFFF; }
+    .pill-chip.aero { background: #e1f0fc; border-color: #89bfe8; color: #005a9e; }
+    .pill-chip.amber { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+    .pill-chip.coral { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+    .pill-chip.forest { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+    .pill-chip.mint { background: #e1f0fc; border-color: #89bfe8; color: #005a9e; }
 
     /* ==========================================================================
-       ROW 1: SLIM TOP BAR
+       ROW 1: WINDOWS 7 TOP BAR
        ========================================================================== */
     .top-bar {
       display: flex;
@@ -219,24 +186,33 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 12px;
-      padding: 12px 20px;
+      padding: 10px 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(225, 238, 251, 0.92) 100%);
     }
 
     .top-brand {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 10px;
     }
 
+    .win7-logo-icon {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .top-title {
-      font-size: 20px;
+      font-size: 17px;
       font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--ink);
+      letter-spacing: -0.01em;
+      color: #0c2847;
     }
 
     .top-subtitle {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--ink-muted);
     }
 
@@ -246,47 +222,55 @@
       gap: 12px;
     }
 
-    /* Segmented pill switch for difficulty */
+    /* Segmented switch for difficulty (Windows 7 Aero toolbar) */
     .segmented-control {
-      background: var(--bg);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--pill-radius);
-      padding: 3px;
+      background: linear-gradient(180deg, #e4effa 0%, #d0e3f5 100%);
+      border: 1px solid #7096c4;
+      border-radius: 4px;
+      padding: 2px;
       display: flex;
       gap: 2px;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
     }
 
     .segment-btn {
       background: transparent;
-      border: none;
-      color: var(--ink-muted);
+      border: 1px solid transparent;
+      color: #2b496e;
       font-family: inherit;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
-      padding: 6px 14px;
-      border-radius: var(--pill-radius);
+      padding: 5px 12px;
+      border-radius: 3px;
       cursor: pointer;
-      transition: background-color var(--transition-base), color var(--transition-base), box-shadow var(--transition-base);
+      transition: all var(--transition-base);
     }
-    .segment-btn:hover { color: var(--ink); }
+    .segment-btn:hover {
+      background: rgba(255, 255, 255, 0.65);
+      border-color: #9cbfe3;
+      color: #0c2b4e;
+    }
     .segment-btn.active {
-      background: var(--surface);
-      color: var(--forest);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      background: linear-gradient(180deg, #ffffff 0%, #e2eefb 49%, #cae2f9 50%, #d4e8fa 100%);
+      border-color: #4b88bf;
+      color: #004b91;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), inset 0 1px 0 #ffffff;
     }
 
-    /* Status Pill */
+    /* Status Pill (Aero Badge) */
     .status-pill {
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.02em;
-      padding: 6px 14px;
-      border-radius: var(--pill-radius);
+      padding: 5px 14px;
+      border-radius: 4px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      border: 1px solid transparent;
-      transition: all var(--transition-base);
+      border: 1px solid #7096c4;
+      background: linear-gradient(180deg, #ffffff 0%, #e8f2fb 100%);
+      color: #1e395b;
+      box-shadow: inset 0 1px 0 #ffffff;
     }
     .status-pill::before {
       content: '';
@@ -294,27 +278,28 @@
       height: 7px;
       border-radius: 50%;
       background: currentColor;
+      box-shadow: 0 0 6px currentColor;
     }
-    .status-pill.ready { background: var(--bg); border-color: var(--surface-border); color: var(--ink-muted); }
-    .status-pill.running { background: var(--mint-pale); border-color: var(--mint); color: var(--forest); }
-    .status-pill.stopped { background: var(--amber-pale); border-color: var(--amber); color: var(--amber); }
-    .status-pill.won { background: var(--mint-pale); border-color: var(--mint); color: var(--forest); }
-    .status-pill.lost { background: var(--coral-pale); border-color: var(--coral); color: var(--coral); }
+    .status-pill.ready { background: #eaf2fb; border-color: #8bb2d6; color: #3b5f85; }
+    .status-pill.running { background: #e1f2ff; border-color: #3c7fb1; color: #0078d7; }
+    .status-pill.stopped { background: #fff7ed; border-color: #f59e0b; color: #b45309; }
+    .status-pill.won { background: #ecfdf5; border-color: #10b981; color: #047857; }
+    .status-pill.lost { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }
 
     /* ==========================================================================
-       ROW 2: STAT METRICS (HERO CARD + 3 STAT CARDS)
+       ROW 2: STAT METRICS (MINES LEFT, TIME, CLIMBS, SUCCESS RATE)
        ========================================================================== */
     .metrics-row {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
+      gap: 14px;
     }
 
     .stat-card {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 120px;
+      min-height: 110px;
     }
 
     .stat-header {
@@ -324,46 +309,78 @@
     }
 
     .stat-label {
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 12px;
+      font-weight: 600;
       color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .stat-num {
-      font-size: 44px;
-      font-weight: 600;
-      line-height: 1.05;
-      letter-spacing: -0.03em;
-      color: var(--ink);
-      margin-top: 8px;
+    /* Classic Minesweeper LED Digital Numbers Box */
+    .stat-num.num-tabular {
+      background: #000000;
+      color: #ff0000;
+      font-family: var(--font-digital);
+      font-weight: 900;
+      font-size: 38px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px rgba(255, 0, 0, 0.8), 0 0 2px #ff0000;
+      border-top: 2px solid #707070;
+      border-left: 2px solid #707070;
+      border-right: 2px solid #ffffff;
+      border-bottom: 2px solid #ffffff;
+      padding: 4px 10px;
+      border-radius: 2px;
+      display: inline-block;
+      margin-top: 6px;
+      line-height: 1.1;
+      text-align: right;
+      width: fit-content;
+      box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Climbs & Rate LED variant */
+    .stat-num-blue.num-tabular {
+      background: #081a2f;
+      color: #38bdf8;
+      text-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
     }
 
     /* Hero Card (Mines Left) */
     .hero-stat-card {
-      background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest) 100%);
-      color: #FFFFFF;
-      border-color: rgba(255, 255, 255, 0.12);
-      box-shadow: 0 8px 24px rgba(15, 61, 42, 0.18);
+      background: linear-gradient(180deg, #f2f7fc 0%, #e2eefb 100%);
+      border: 1px solid #7096c4;
+      box-shadow: var(--shadow-aero);
     }
-    .hero-stat-card .stat-label { color: rgba(255, 255, 255, 0.82); }
-    .hero-stat-card .stat-num { color: #FFFFFF; }
+    .hero-stat-card .stat-label { color: #1c3d64; }
 
+    /* Classic 3D Raised Smiley Face Button */
     .hero-refresh-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #FFFFFF;
+      width: 40px;
+      height: 40px;
+      border-radius: 3px;
+      background: #c0c0c0;
+      border-top: 3px solid #ffffff;
+      border-left: 3px solid #ffffff;
+      border-right: 3px solid #707070;
+      border-bottom: 3px solid #707070;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      transition: all var(--transition-base);
+      transition: all 0.08s ease;
+      padding: 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     }
     .hero-refresh-btn:hover {
-      background: rgba(255, 255, 255, 0.28);
-      transform: rotate(35deg);
+      background: #d0d0d0;
+    }
+    .hero-refresh-btn:active {
+      border-top: 3px solid #707070;
+      border-left: 3px solid #707070;
+      border-right: 3px solid #ffffff;
+      border-bottom: 3px solid #ffffff;
+      background: #b5b5b5;
     }
 
     /* Success rate gauge */
@@ -379,20 +396,21 @@
     .board-and-step-row {
       display: grid;
       grid-template-columns: 1fr 380px;
-      gap: 16px;
+      gap: 14px;
       align-items: start;
     }
 
-    /* Action Bar (Pill buttons & Master Speed Slider) */
+    /* Action Bar (Windows 7 Aero Toolbar) */
     .board-controls-bar {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      background: var(--surface-subtle);
-      border: 1px solid var(--surface-border);
+      gap: 10px;
+      background: linear-gradient(180deg, #fbfdfe 0%, #edf4fc 100%);
+      border: 1px solid #9cbfe3;
       border-radius: var(--card-radius-sm);
-      padding: 14px 16px;
-      margin-bottom: 16px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      box-shadow: inset 0 1px 0 #ffffff;
     }
 
     .controls-main-row {
@@ -409,57 +427,73 @@
       gap: 8px;
     }
 
-    /* Pill Buttons */
+    /* Windows 7 Aero Glossy Push Button */
     .pill-btn {
       font-family: inherit;
       font-size: 13px;
       font-weight: 600;
-      padding: 8px 18px;
-      border-radius: var(--pill-radius);
+      padding: 6px 16px;
+      border-radius: 4px;
       display: inline-flex;
       align-items: center;
       gap: 7px;
       cursor: pointer;
-      transition: all var(--transition-base);
-      border: 1px solid transparent;
-      min-height: 40px;
+      transition: all 0.15s ease;
+      min-height: 32px;
+      border: 1px solid #7096c4;
+      background: linear-gradient(180deg, #ffffff 0%, #eaf2fb 49%, #d4e5f7 50%, #d8e8f8 100%);
+      color: #1e395b;
+      box-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .pill-btn:hover:not(:disabled) {
+      border-color: #3c7fb1;
+      background: linear-gradient(180deg, #f2f8fe 0%, #daf0fc 49%, #bee5fd 50%, #ccebfd 100%);
+      box-shadow: 0 0 8px rgba(60, 160, 255, 0.5), inset 0 1px 0 #ffffff;
+      color: #0b2f54;
+    }
+
+    .pill-btn:active:not(:disabled) {
+      background: linear-gradient(180deg, #c2e4f6 0%, #a6d8f4 50%, #8acbf2 100%);
+      border-color: #2c628b;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
     }
 
     .pill-btn-primary {
-      background: var(--forest);
-      color: #FFFFFF;
+      border-color: #3c7fb1;
+      background: linear-gradient(180deg, #e4f3fd 0%, #b8defc 49%, #8ac9f7 50%, #9cd2f8 100%);
+      color: #0a335c;
+      font-weight: 700;
     }
+
     .pill-btn-primary:hover:not(:disabled) {
-      background: var(--forest-hover);
-      box-shadow: 0 4px 12px rgba(31, 107, 71, 0.28);
+      border-color: #1868a8;
+      background: linear-gradient(180deg, #f0f8ff 0%, #cce9fd 49%, #a2d7fb 50%, #b4e0fc 100%);
+      box-shadow: 0 0 10px rgba(40, 150, 255, 0.65), inset 0 1px 0 #ffffff;
     }
 
     .pill-btn-secondary {
-      background: var(--surface);
-      border-color: var(--surface-border);
-      color: var(--ink);
-    }
-    .pill-btn-secondary:hover:not(:disabled) {
-      border-color: var(--amber);
-      color: var(--amber);
+      border-color: #7096c4;
     }
 
     .pill-btn-ghost {
       background: transparent;
-      color: var(--ink-muted);
+      border-color: transparent;
+      box-shadow: none;
+      color: #315175;
     }
     .pill-btn-ghost:hover:not(:disabled) {
-      background: rgba(20, 34, 27, 0.05);
-      color: var(--ink);
+      background: rgba(255, 255, 255, 0.65);
+      border-color: #7096c4;
     }
 
     .pill-btn:disabled {
-      opacity: 0.38;
+      opacity: 0.45;
       cursor: not-allowed;
       box-shadow: none !important;
     }
 
-    /* Slider styling with rounded thumb */
+    /* Slider styling */
     .speed-slider-wrap {
       display: flex;
       align-items: center;
@@ -467,8 +501,8 @@
     }
 
     .slider-label {
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 12px;
+      font-weight: 600;
       color: var(--ink-muted);
     }
 
@@ -476,8 +510,9 @@
       -webkit-appearance: none;
       appearance: none;
       width: 100px;
-      height: 8px;
-      background: var(--mint-pale);
+      height: 6px;
+      background: #c3d9ef;
+      border: 1px solid #8eafce;
       border-radius: 999px;
       outline: none;
       cursor: pointer;
@@ -485,25 +520,26 @@
     .modern-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      background: #FFFFFF;
-      border: 2px solid var(--forest);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      background: linear-gradient(180deg, #ffffff 0%, #d8e8f8 100%);
+      border: 1.5px solid #4a82b8;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
       cursor: pointer;
       transition: transform 0.1s ease;
     }
     .modern-slider::-webkit-slider-thumb:hover {
       transform: scale(1.15);
+      border-color: #0078d7;
     }
     .modern-slider::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      background: #FFFFFF;
-      border: 2px solid var(--forest);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      background: linear-gradient(180deg, #ffffff 0%, #d8e8f8 100%);
+      border: 1.5px solid #4a82b8;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
       cursor: pointer;
     }
 
@@ -513,8 +549,8 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 12px;
-      padding-top: 8px;
-      border-top: 1px solid var(--surface-border-subtle);
+      padding-top: 6px;
+      border-top: 1px solid #d8e7f5;
     }
 
     .sub-slider-item {
@@ -526,23 +562,23 @@
     }
 
     .sub-slider-item select {
-      background: var(--surface);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--pill-radius);
+      background: #ffffff;
+      border: 1px solid #8eafce;
+      border-radius: 3px;
       color: var(--ink);
       font-family: inherit;
       font-size: 12px;
       font-weight: 600;
-      padding: 4px 10px;
+      padding: 3px 8px;
       outline: none;
       cursor: pointer;
     }
 
-    /* Modern Toggle Switch */
+    /* Toggle Switch */
     .toggle-switch-label {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       font-size: 12px;
       font-weight: 500;
       color: var(--ink-muted);
@@ -558,56 +594,68 @@
     }
 
     .toggle-switch-track {
-      width: 32px;
-      height: 18px;
+      width: 30px;
+      height: 16px;
       border-radius: 999px;
-      background: var(--surface-border);
+      background: #c3d9ef;
+      border: 1px solid #8eafce;
       position: relative;
       transition: background-color var(--transition-base);
     }
     .toggle-switch-track::after {
       content: '';
       position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 14px;
-      height: 14px;
+      top: 1px;
+      left: 1px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      background: #FFFFFF;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
       transition: transform var(--transition-base);
     }
     .toggle-switch-input:checked + .toggle-switch-track {
-      background: var(--forest);
+      background: var(--aero-blue);
+      border-color: #005a9e;
     }
     .toggle-switch-input:checked + .toggle-switch-track::after {
       transform: translateX(14px);
     }
 
-    /* Board Viewport */
+    /* ==========================================================================
+       CLASSIC MINESWEEPER BOARD (MATCHING USER SCREENSHOT EXACTLY)
+       ========================================================================== */
     .board-container {
       position: relative;
       max-width: 100%;
       overflow: auto;
-      border-radius: var(--card-radius-sm);
-      background: var(--surface-subtle);
-      border: 1px solid var(--surface-border);
-      padding: 12px;
+      border-radius: 4px;
+      background: #c0c0c0;
+      border-top: 3px solid #707070;
+      border-left: 3px solid #707070;
+      border-right: 3px solid #ffffff;
+      border-bottom: 3px solid #ffffff;
+      padding: 10px;
       display: flex;
       justify-content: center;
+      box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
     }
 
     .board-wrapper {
       position: relative;
       display: inline-block;
+      background: #c0c0c0;
+      border-top: 3px solid #808080;
+      border-left: 3px solid #808080;
+      border-right: 3px solid #ffffff;
+      border-bottom: 3px solid #ffffff;
+      padding: 2px;
     }
 
     .board-grid {
       display: grid;
-      gap: 3px;
-      background: transparent;
-      padding: 2px;
-      border-radius: 8px;
+      gap: 0px;
+      background: #7b7b7b;
       position: relative;
     }
 
@@ -627,38 +675,45 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      font-weight: 900;
       font-size: 1rem;
       cursor: pointer;
-      border-radius: 8px;
-      transition: background-color var(--transition-base), transform 0.08s ease;
+      border-radius: 0px;
       box-sizing: border-box;
       outline: none;
+      user-select: none;
     }
 
+    /* Classic 3D Beveled Unrevealed Cell */
     .cell.hidden {
-      background-color: var(--cell-hidden-bg);
-      background-image: repeating-linear-gradient(45deg, transparent, transparent 6px, var(--cell-hidden-hatch) 6px, var(--cell-hidden-hatch) 7px);
-      border: 1px solid var(--cell-border);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      background-color: #c0c0c0;
+      border-top: 3px solid #ffffff;
+      border-left: 3px solid #ffffff;
+      border-right: 3px solid #7b7b7b;
+      border-bottom: 3px solid #7b7b7b;
+      box-shadow: none;
     }
     .cell.hidden:hover {
-      background-color: var(--mint-pale);
-      border-color: var(--mint);
+      background-color: #cdd9e6; /* subtle win7 hover shine */
+    }
+    .cell.hidden:active {
+      border: 1px solid #7b7b7b;
     }
 
+    /* Classic Sunken Flat Revealed Cell */
     .cell.revealed {
-      background: var(--cell-revealed-bg);
-      border: 1px solid var(--surface-border-subtle);
+      background: #c0c0c0;
+      border: 1px solid #7b7b7b;
       cursor: default;
     }
 
     .cell.revealed.zero {
-      background: var(--cell-zero-bg);
-      background-image: none;
-      border-color: transparent;
+      background: #c0c0c0;
+      border: 1px solid #7b7b7b;
     }
 
+    /* Classic Number Palette */
     .cell[data-num="1"] { color: var(--num-1); }
     .cell[data-num="2"] { color: var(--num-2); }
     .cell[data-num="3"] { color: var(--num-3); }
@@ -668,50 +723,57 @@
     .cell[data-num="7"] { color: var(--num-7); }
     .cell[data-num="8"] { color: var(--num-8); }
 
-    .cell.mine { background: var(--coral-pale); }
-    .cell.mine-exploded { background: var(--coral) !important; color: #FFFFFF; }
+    .cell.mine {
+      background: #c0c0c0;
+      border: 1px solid #7b7b7b;
+    }
+
+    .cell.mine-exploded {
+      background: #ff0000 !important;
+      border: 1px solid #7b7b7b !important;
+    }
 
     .cell.wrong-flag {
-      background: var(--coral-pale);
+      background: #c0c0c0;
+      border: 1px solid #7b7b7b;
       position: relative;
     }
 
-    /* Live Playback Cell Pulse & Constraints */
-    @keyframes mintPulse {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(127, 203, 160, 0.9); }
-      50% { transform: scale(1.15); box-shadow: 0 0 16px 4px rgba(127, 203, 160, 0.7); }
-      100% { transform: scale(1); box-shadow: 0 0 2px rgba(127, 203, 160, 0.3); }
+    /* Live Playback Animations */
+    @keyframes win7Pulse {
+      0% { box-shadow: inset 0 0 0 2px #0078d7, 0 0 0 0 rgba(0, 120, 215, 0.8); }
+      50% { box-shadow: inset 0 0 0 2px #0078d7, 0 0 14px 4px rgba(0, 120, 215, 0.7); }
+      100% { box-shadow: inset 0 0 0 1px #0078d7, 0 0 2px rgba(0, 120, 215, 0.3); }
     }
 
     .cell-just-flipped {
-      animation: mintPulse 0.4s ease-in-out !important;
-      border: 2px solid var(--mint) !important;
+      animation: win7Pulse 0.4s ease-in-out !important;
       z-index: 6;
     }
 
     .frontier-simulated-mine {
-      background: var(--coral-pale) !important;
-      border: 1px dashed var(--coral) !important;
+      background: #ffe6e6 !important;
+      border: 1.5px dashed #cc0000 !important;
     }
 
     .frontier-simulated-safe {
-      background: var(--mint-pale) !important;
-      border: 1px dashed var(--mint) !important;
-      color: var(--forest) !important;
+      background: #e6f2fb !important;
+      border: 1.5px dashed #0078d7 !important;
+      color: #0078d7 !important;
     }
 
     .cell.constraint-satisfied {
-      background: var(--mint-pale) !important;
-      border: 1.5px solid var(--mint) !important;
-      color: var(--forest) !important;
+      background: #e6f9ed !important;
+      border: 1.5px solid #008000 !important;
+      color: #008000 !important;
       font-size: 0.76rem !important;
       font-weight: 800 !important;
     }
 
     .cell.constraint-violated {
-      background: var(--amber-pale) !important;
-      border: 1.5px solid var(--amber) !important;
-      color: var(--amber) !important;
+      background: #fff3e0 !important;
+      border: 1.5px solid #d97706 !important;
+      color: #d97706 !important;
       font-size: 0.76rem !important;
       font-weight: 800 !important;
     }
@@ -720,30 +782,31 @@
     .step-metrics-card-body {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .step-grid-2x2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 8px;
     }
 
     .step-subcard {
-      background: var(--surface-subtle);
-      border: 1px solid var(--surface-border-subtle);
+      background: linear-gradient(180deg, #ffffff 0%, #f4f8fd 100%);
+      border: 1px solid #b8d2eb;
       border-radius: var(--card-radius-sm);
-      padding: 10px 12px;
+      padding: 8px 10px;
       display: flex;
       flex-direction: column;
+      box-shadow: inset 0 1px 0 #ffffff;
     }
     .step-subcard .sub-label {
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--ink-muted);
     }
     .step-subcard .sub-val {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--ink);
       margin-top: 2px;
@@ -751,12 +814,12 @@
     }
 
     .step-live-info {
-      background: var(--mint-pale);
-      border: 1px solid var(--mint);
+      background: #eaf3fb;
+      border: 1px solid #99c2e8;
       border-radius: var(--card-radius-sm);
-      padding: 12px;
-      color: var(--forest);
-      font-size: 13px;
+      padding: 10px 12px;
+      color: #103358;
+      font-size: 12px;
       line-height: 1.45;
     }
 
@@ -766,15 +829,15 @@
     .charts-triplet-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      gap: 14px;
     }
 
     canvas.bento-canvas {
       width: 100%;
       display: block;
       border-radius: var(--card-radius-sm);
-      background: var(--surface-subtle);
-      border: 1px solid var(--surface-border-subtle);
+      background: #f5f9fd;
+      border: 1px solid #b8d2eb;
     }
 
     #climb-canvas { height: 120px; }
@@ -787,14 +850,14 @@
     .bottom-triplet-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      gap: 14px;
     }
 
-    /* Move Log rows with clean dot markers */
+    /* Move Log */
     .log-container {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       max-height: 140px;
       overflow-y: auto;
     }
@@ -806,9 +869,9 @@
       align-items: center;
       gap: 8px;
       padding: 5px 8px;
-      background: var(--surface-subtle);
-      border-radius: 8px;
-      border: 1px solid var(--surface-border-subtle);
+      background: #f4f8fd;
+      border-radius: 4px;
+      border: 1px solid #d2e4f6;
       line-height: 1.35;
     }
     .log-item-dot {
@@ -817,8 +880,8 @@
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .log-item-dot.move { background: var(--mint); }
-    .log-item-dot.solution { background: var(--forest); }
+    .log-item-dot.move { background: var(--aero-blue); }
+    .log-item-dot.solution { background: #008000; }
     .log-item-dot.stuck { background: var(--coral); }
     .log-item-dot.sideways { background: var(--amber); }
 
@@ -827,7 +890,8 @@
       max-height: 140px;
       overflow-y: auto;
       border-radius: var(--card-radius-sm);
-      border: 1px solid var(--surface-border-subtle);
+      border: 1px solid #b8d2eb;
+      background: #ffffff;
     }
 
     .solutions-table {
@@ -838,41 +902,42 @@
     }
 
     .solutions-table th {
-      background: var(--surface-subtle);
+      background: linear-gradient(180deg, #f4f8fd 0%, #e5effa 100%);
       color: var(--ink-muted);
       font-weight: 600;
       padding: 6px 10px;
-      border-bottom: 1px solid var(--surface-border);
+      border-bottom: 1px solid #b8d2eb;
     }
 
     .solutions-table td {
-      padding: 6px 10px;
-      border-bottom: 1px solid var(--surface-border-subtle);
+      padding: 5px 10px;
+      border-bottom: 1px solid #e5effa;
       color: var(--ink);
     }
 
-    /* Decision Hero Card */
+    /* Decision Hero Card (Windows 7 Aero Blue Glass) */
     .decision-hero-card {
-      background: linear-gradient(135deg, var(--forest-deep) 0%, #174E35 100%);
-      color: #FFFFFF;
+      background: linear-gradient(135deg, #1b538c 0%, #2976ba 50%, #1b538c 100%);
+      color: #ffffff;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      border-color: rgba(255, 255, 255, 0.12);
-      box-shadow: 0 8px 24px rgba(15, 61, 42, 0.16);
+      border: 1px solid #6b9ece;
+      box-shadow: var(--shadow-aero);
     }
 
-    .decision-hero-card .card-title { color: #FFFFFF; }
+    .decision-hero-card .card-title { color: #ffffff; }
     .decision-headline {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 700;
       line-height: 1.3;
-      color: #FFFFFF;
+      color: #ffffff;
       margin-top: 8px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     .decision-subline {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.78);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.88);
       margin-top: 6px;
     }
 
@@ -888,20 +953,21 @@
       margin-top: 10px;
     }
     .bench-table th, .bench-table td {
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--surface-border-subtle);
+      padding: 7px 12px;
+      border-bottom: 1px solid #d8e7f5;
     }
     .bench-table th {
       font-weight: 600;
       color: var(--ink-muted);
-      background: var(--surface-subtle);
+      background: linear-gradient(180deg, #f4f8fd 0%, #e5effa 100%);
     }
 
     #bench-chart {
       width: 100%;
       height: 90px;
-      margin-top: 12px;
-      background: var(--surface-subtle);
+      margin-top: 10px;
+      background: #f5f9fd;
+      border: 1px solid #b8d2eb;
       border-radius: var(--card-radius-sm);
     }
 
@@ -933,15 +999,24 @@
 
   <div class="bento-container">
 
-    <!-- ROW 1: SLIM TOP BAR -->
+    <!-- ROW 1: WINDOWS 7 TOP BAR -->
     <header class="bento-card top-bar">
       <div class="top-brand">
-        <h1 class="top-title">Minesweeper Lab</h1>
-        <span class="top-subtitle">Autonomous Hill-Climbing Solver</span>
+        <!-- Classic Windows 7 Orb Style Icon -->
+        <span class="win7-logo-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22">
+            <!-- Mine / Win7 Badge -->
+            <circle cx="12" cy="12" r="10" fill="#0078d7" stroke="#ffffff" stroke-width="1.5"/>
+            <path d="M 12 4 L 12 20 M 4 12 L 20 12 M 6.3 6.3 L 17.7 17.7 M 6.3 17.7 L 17.7 6.3" stroke="#ffffff" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="3.5" fill="#ffffff"/>
+          </svg>
+        </span>
+        <h1 class="top-title">Minesweeper</h1>
+        <span class="top-subtitle">Windows 7 Edition • Autonomous Hill-Climbing Solver</span>
       </div>
 
       <div class="top-controls">
-        <!-- Difficulty Switch (Pill Segmented Control) -->
+        <!-- Difficulty Switch (Toolbar Segmented Control) -->
         <div class="segmented-control" role="group" aria-label="Difficulty">
           <button class="segment-btn active" id="btn-beginner" data-diff="beginner">9x9</button>
           <button class="segment-btn" id="btn-intermediate" data-diff="intermediate">16x16</button>
@@ -955,13 +1030,17 @@
 
     <!-- ROW 2: FOUR STAT CARDS -->
     <section class="metrics-row" aria-label="Key Game Statistics">
-      <!-- HERO CARD: Mines Left + Refresh Icon Button -->
+      <!-- HERO CARD: Mines Left + Smiley Face Button -->
       <div class="bento-card stat-card hero-stat-card">
         <div class="stat-header">
-          <span class="stat-label">Mines left</span>
+          <span class="stat-label">Mines Left</span>
           <button class="hero-refresh-btn" id="face-btn" title="Restart game">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+            <!-- Classic Yellow Smiley Face -->
+            <svg viewBox="0 0 24 24" width="22" height="22">
+              <circle cx="12" cy="12" r="10" fill="#ffdf00" stroke="#000000" stroke-width="1.2"/>
+              <circle cx="8.5" cy="9.5" r="1.4" fill="#000000"/>
+              <circle cx="15.5" cy="9.5" r="1.4" fill="#000000"/>
+              <path d="M 7.5 14.5 Q 12 18.5 16.5 14.5" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
           </button>
         </div>
@@ -971,7 +1050,7 @@
       <!-- Time Card -->
       <div class="bento-card stat-card">
         <div class="stat-header">
-          <span class="stat-label">Time elapsed</span>
+          <span class="stat-label">Time Elapsed</span>
         </div>
         <div class="stat-num num-tabular" id="timer-counter">000</div>
       </div>
@@ -979,22 +1058,22 @@
       <!-- Climbs Run Card -->
       <div class="bento-card stat-card">
         <div class="stat-header">
-          <span class="stat-label">Climbs run</span>
+          <span class="stat-label">Climbs Run</span>
         </div>
-        <div class="stat-num num-tabular" id="cnt-climbs">0</div>
+        <div class="stat-num stat-num-blue num-tabular" id="cnt-climbs">0</div>
       </div>
 
       <!-- Success Rate Card with Gauge -->
       <div class="bento-card stat-card">
         <div class="stat-header">
-          <span class="stat-label">Success rate</span>
+          <span class="stat-label">Success Rate</span>
         </div>
         <div class="stat-gauge-box">
-          <div class="stat-num num-tabular" id="cnt-rate">0%</div>
+          <div class="stat-num stat-num-blue num-tabular" id="cnt-rate">0%</div>
           <!-- Semicircle SVG Gauge -->
           <svg viewBox="0 0 60 32" width="58" height="30" aria-hidden="true">
-            <path d="M 6 30 A 24 24 0 0 1 54 30" fill="none" stroke="var(--mint-pale)" stroke-width="6" stroke-linecap="round"/>
-            <path id="gauge-arc" d="M 6 30 A 24 24 0 0 1 54 30" fill="none" stroke="var(--forest)" stroke-width="6" stroke-linecap="round" stroke-dasharray="75.4" stroke-dashoffset="75.4"/>
+            <path d="M 6 30 A 24 24 0 0 1 54 30" fill="none" stroke="#c3d9ef" stroke-width="6" stroke-linecap="round"/>
+            <path id="gauge-arc" d="M 6 30 A 24 24 0 0 1 54 30" fill="none" stroke="#0078d7" stroke-width="6" stroke-linecap="round" stroke-dasharray="75.4" stroke-dashoffset="75.4"/>
           </svg>
         </div>
       </div>
@@ -1006,7 +1085,7 @@
       <main class="bento-card" style="display: flex; flex-direction: column;">
         <div class="card-header-row">
           <span class="card-title">
-            Puzzle board
+            Minesweeper Board
             <span class="card-title-sub">Interactive constraint environment</span>
           </span>
         </div>
@@ -1030,7 +1109,7 @@
             <div class="speed-slider-wrap">
               <span class="slider-label">Speed:</span>
               <input type="range" class="modern-slider" id="speed-slider" min="1" max="30" value="10">
-              <span class="pill-chip mint num-tabular" id="speed-val">10/s</span>
+              <span class="pill-chip aero num-tabular" id="speed-val">10/s</span>
             </div>
           </div>
 
@@ -1071,7 +1150,7 @@
           </div>
         </div>
 
-        <!-- Board Container -->
+        <!-- Board Container (Classic Beveled Frame) -->
         <div class="board-container" id="board-container">
           <div class="board-wrapper" id="board-wrapper">
             <div class="board-grid" id="board-grid" role="grid"></div>
@@ -1083,45 +1162,45 @@
       <!-- Current Step Card -->
       <aside class="bento-card" id="step-card">
         <div class="card-header-row">
-          <span class="card-title">Current step</span>
+          <span class="card-title">Current Step</span>
           <div style="display:flex; align-items:center; gap:6px;">
             <span class="pill-chip amber" id="card-fast-badge" style="display:none;">Fast-forwarding</span>
-            <span class="pill-chip mint" id="card-move-type">Ready</span>
+            <span class="pill-chip aero" id="card-move-type">Ready</span>
           </div>
         </div>
 
         <div class="step-metrics-card-body">
           <div class="step-grid-2x2">
             <div class="step-subcard">
-              <span class="sub-label">Climb progress</span>
+              <span class="sub-label">Climb Progress</span>
               <span class="sub-val" id="card-climb-info">Climb 0 / 0</span>
             </div>
             <div class="step-subcard">
-              <span class="sub-label">Step number</span>
+              <span class="sub-label">Step Number</span>
               <span class="sub-val" id="card-step-num">0</span>
             </div>
             <div class="step-subcard">
-              <span class="sub-label">Flipped cell</span>
+              <span class="sub-label">Flipped Cell</span>
               <span class="sub-val" id="card-flipped-cell">None</span>
             </div>
             <div class="step-subcard">
-              <span class="sub-label">Value transition</span>
+              <span class="sub-label">Value Transition</span>
               <span class="sub-val" id="card-flip-val">-</span>
             </div>
           </div>
 
           <div class="step-subcard">
-            <span class="sub-label">Score change (violations)</span>
+            <span class="sub-label">Score Change (Violations)</span>
             <span class="sub-val" id="card-score-change">-</span>
           </div>
 
           <div class="step-grid-2x2">
             <div class="step-subcard">
-              <span class="sub-label">Unique solutions</span>
+              <span class="sub-label">Unique Solutions</span>
               <span class="sub-val" id="cnt-unique">0</span>
             </div>
             <div class="step-subcard">
-              <span class="sub-label">Stuck plateaus</span>
+              <span class="sub-label">Stuck Plateaus</span>
               <span class="sub-val" id="cnt-stuck">0</span>
             </div>
           </div>
@@ -1139,8 +1218,8 @@
       <!-- Score Trajectory -->
       <div class="bento-card">
         <div class="card-header-row">
-          <span class="card-title">Score trajectory</span>
-          <span class="pill-chip mint">Current climb</span>
+          <span class="card-title">Score Trajectory</span>
+          <span class="pill-chip aero">Current Climb</span>
         </div>
         <canvas class="bento-canvas" id="climb-canvas" width="440" height="120"></canvas>
       </div>
@@ -1148,8 +1227,8 @@
       <!-- Landscape View -->
       <div class="bento-card">
         <div class="card-header-row">
-          <span class="card-title">Landscape view</span>
-          <span class="pill-chip">Climb vs score</span>
+          <span class="card-title">Landscape View</span>
+          <span class="pill-chip">Climb vs Score</span>
         </div>
         <canvas class="bento-canvas" id="landscape-canvas" width="440" height="120"></canvas>
       </div>
@@ -1157,8 +1236,8 @@
       <!-- Neighborhood View -->
       <div class="bento-card">
         <div class="card-header-row">
-          <span class="card-title">Neighborhood flips</span>
-          <span class="pill-chip forest">Steepest ascent</span>
+          <span class="card-title">Neighborhood Flips</span>
+          <span class="pill-chip aero">Steepest Ascent</span>
         </div>
         <canvas class="bento-canvas" id="neighborhood-canvas" width="440" height="120"></canvas>
       </div>
@@ -1169,8 +1248,8 @@
       <!-- Move Log -->
       <div class="bento-card">
         <div class="card-header-row">
-          <span class="card-title">Move log</span>
-          <span class="pill-chip">Last 10 events</span>
+          <span class="card-title">Move Log</span>
+          <span class="pill-chip">Last 10 Events</span>
         </div>
         <div class="log-container" id="move-log">
           <div class="log-item">
@@ -1183,8 +1262,8 @@
       <!-- Solutions Table -->
       <div class="bento-card">
         <div class="card-header-row">
-          <span class="card-title">Solutions table</span>
-          <span class="pill-chip mint" id="solutions-count-badge">0 unique</span>
+          <span class="card-title">Solutions Table</span>
+          <span class="pill-chip aero" id="solutions-count-badge">0 unique</span>
         </div>
         <div class="solutions-container">
           <table class="solutions-table">
@@ -1207,8 +1286,8 @@
       <div class="bento-card decision-hero-card">
         <div>
           <div class="card-header-row">
-            <span class="card-title">Solver decision</span>
-            <span class="pill-chip mint" style="background:rgba(255,255,255,0.2); border-color:transparent; color:#FFFFFF;">Next move</span>
+            <span class="card-title">Solver Decision</span>
+            <span class="pill-chip" style="background:rgba(255,255,255,0.2); border-color:transparent; color:#FFFFFF;">Next Move</span>
           </div>
           <div class="decision-headline" id="decision-callout">
             Awaiting first move
@@ -1225,10 +1304,10 @@
     <!-- ROW 6: BENCHMARK SUITE -->
     <section class="bento-card benchmark-card">
       <div class="card-header-row">
-        <span class="card-title">Algorithm benchmark</span>
+        <span class="card-title">Algorithm Benchmark</span>
         <div class="pill-btn-group">
-          <button class="pill-btn pill-btn-secondary" id="btn-run-100">Run 100 games</button>
-          <button class="pill-btn pill-btn-primary" id="btn-compare-all">Compare all three</button>
+          <button class="pill-btn pill-btn-secondary" id="btn-run-100">Run 100 Games</button>
+          <button class="pill-btn pill-btn-primary" id="btn-compare-all">Compare All Three</button>
         </div>
       </div>
 
@@ -1237,8 +1316,8 @@
           <thead>
             <tr>
               <th>Algorithm</th>
-              <th>Win rate</th>
-              <th>Avg guesses</th>
+              <th>Win Rate</th>
+              <th>Avg Guesses</th>
               <th>Sol/Session</th>
             </tr>
           </thead>
@@ -1655,6 +1734,9 @@
       const isRunning = (status === 'RUNNING');
       dom.btnStart.disabled = isRunning;
       dom.btnStop.disabled = !isRunning;
+      if (status === 'WON') updateFace('won');
+      else if (status === 'LOST') updateFace('lost');
+      else updateFace('smile');
     }
 
     function sleep(ms) {
@@ -2108,7 +2190,7 @@
       // Automatically stop when climb progress reaches 100 (or totalClimbs setting)
       // so the user can scroll down and review all charts, landscape view, solutions, and telemetry
       dom.cardMoveType.textContent = 'Completed';
-      dom.cardMoveType.className = 'pill-chip forest';
+      dom.cardMoveType.className = 'pill-chip aero';
       dom.cardClimbInfo.textContent = `Climb ${totalClimbs} / ${totalClimbs}`;
       stopBot();
       addMoveLog(`Reached climb ${totalClimbs}/${totalClimbs}. Stopped for review.`, 'solution');
@@ -2226,7 +2308,7 @@
       const formattedType = moveType.charAt(0).toUpperCase() + moveType.slice(1);
       dom.cardMoveType.textContent = formattedType;
       
-      let chipClass = 'pill-chip mint';
+      let chipClass = 'pill-chip aero';
       if (moveType === 'stuck') chipClass = 'pill-chip coral';
       else if (moveType === 'sideways') chipClass = 'pill-chip amber';
       else if (moveType === 'solved') chipClass = 'pill-chip forest';
@@ -2271,13 +2353,13 @@
         const mineCoords = sol.mineCells.map(c => `(${c.r},${c.c})`).join(' ') || 'None';
         return `
           <tr>
-            <td style="color:var(--forest); font-weight:700;">#${idx + 1}</td>
+            <td style="color:var(--aero-blue); font-weight:700;">#${idx + 1}</td>
             <td title="${mineCoords}">${mineCoords}</td>
             <td style="font-weight:600;">${sol.count}</td>
             <td>
               <div style="display:flex; align-items:center; gap:6px;">
-                <div style="flex:1; height:4px; background:var(--mint-pale); border-radius:999px; overflow:hidden;">
-                  <div style="width:${sol.share}%; height:100%; background:var(--mint); border-radius:999px;"></div>
+                <div style="flex:1; height:4px; background:var(--aero-blue-pale); border-radius:3px; overflow:hidden;">
+                  <div style="width:${sol.share}%; height:100%; background:var(--aero-blue); border-radius:999px;"></div>
                 </div>
                 <span style="font-size:11px; color:var(--ink-muted);">${sol.share}%</span>
               </div>
@@ -2328,12 +2410,64 @@
       dom.minesCounter.textContent = formatNumber(remaining);
     }
 
-    function getFlagSVG() {
-      return `<svg viewBox="0 0 24 24" width="16" height="16" fill="var(--coral)" stroke="var(--coral)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21v-4m0 0V4a1 1 0 0 1 1.5-.86l10 5a1 1 0 0 1 0 1.72l-10 5A1 1 0 0 1 5 17z"/></svg>`;
+        function getFlagSVG() {
+      return `<svg viewBox="0 0 24 24" width="18" height="18">
+        <polygon points="6,4 18,8.5 6,13" fill="#ff0000" stroke="#b00000" stroke-width="0.8"/>
+        <line x1="6" y1="3" x2="6" y2="19" stroke="#000000" stroke-width="2" stroke-linecap="round"/>
+        <rect x="4" y="18" width="8" height="2" fill="#000000"/>
+        <rect x="2" y="20" width="12" height="2.5" fill="#404040"/>
+      </svg>`;
     }
 
     function getMineSVG() {
-      return `<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="6" fill="var(--ink)"/><circle cx="12" cy="12" r="2.2" fill="var(--coral)"/><line x1="12" y1="2" x2="12" y2="5" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="22" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="12" x2="5" y2="12" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="12" x2="22" y2="12" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="4.9" y1="4.9" x2="7.2" y2="7.2" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="16.8" y1="16.8" x2="19.1" y2="19.1" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="4.9" y1="19.1" x2="7.2" y2="16.8" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="16.8" y1="7.2" x2="19.1" y2="4.9" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/></svg>`;
+      return `<svg viewBox="0 0 24 24" width="18" height="18">
+        <line x1="12" y1="2" x2="12" y2="22" stroke="#000000" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="2" y1="12" x2="22" y2="12" stroke="#000000" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="4.9" y1="4.9" x2="19.1" y2="19.1" stroke="#000000" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="4.9" y1="19.1" x2="19.1" y2="4.9" stroke="#000000" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="12" cy="12" r="6" fill="#000000"/>
+        <circle cx="10" cy="10" r="1.8" fill="#ffffff"/>
+      </svg>`;
+    }
+
+    function getFaceSVG(type = 'smile') {
+      if (type === 'won') {
+        return `<svg viewBox="0 0 24 24" width="22" height="22">
+          <circle cx="12" cy="12" r="10" fill="#ffdf00" stroke="#000000" stroke-width="1.2"/>
+          <path d="M 5 8.5 L 19 8.5 L 18 12.5 C 17 14 13.5 14 12.5 12.5 L 11.5 12.5 C 10.5 14 7 14 6 12.5 Z" fill="#000000"/>
+          <path d="M 8 16 Q 12 19 16 16" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>`;
+      }
+      if (type === 'lost') {
+        return `<svg viewBox="0 0 24 24" width="22" height="22">
+          <circle cx="12" cy="12" r="10" fill="#ffdf00" stroke="#000000" stroke-width="1.2"/>
+          <line x1="7" y1="8" x2="10" y2="11" stroke="#000000" stroke-width="1.5"/>
+          <line x1="10" y1="8" x2="7" y2="11" stroke="#000000" stroke-width="1.5"/>
+          <line x1="14" y1="8" x2="17" y2="11" stroke="#000000" stroke-width="1.5"/>
+          <line x1="17" y1="8" x2="14" y2="11" stroke="#000000" stroke-width="1.5"/>
+          <path d="M 8 16.5 Q 12 13 16 16.5" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>`;
+      }
+      if (type === 'surprised') {
+        return `<svg viewBox="0 0 24 24" width="22" height="22">
+          <circle cx="12" cy="12" r="10" fill="#ffdf00" stroke="#000000" stroke-width="1.2"/>
+          <circle cx="8.5" cy="9.5" r="1.4" fill="#000000"/>
+          <circle cx="15.5" cy="9.5" r="1.4" fill="#000000"/>
+          <circle cx="12" cy="15.5" r="2.5" fill="none" stroke="#000000" stroke-width="1.5"/>
+        </svg>`;
+      }
+      return `<svg viewBox="0 0 24 24" width="22" height="22">
+        <circle cx="12" cy="12" r="10" fill="#ffdf00" stroke="#000000" stroke-width="1.2"/>
+        <circle cx="8.5" cy="9.5" r="1.4" fill="#000000"/>
+        <circle cx="15.5" cy="9.5" r="1.4" fill="#000000"/>
+        <path d="M 7.5 14.5 Q 12 18.5 16.5 14.5" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>`;
+    }
+
+    function updateFace(type) {
+      if (dom && dom.faceBtn) {
+        dom.faceBtn.innerHTML = getFaceSVG(type);
+      }
     }
 
     function renderCell(cell, element) {
@@ -2418,7 +2552,7 @@
       const diffConfig = CONFIG.difficulties[CONFIG.currentDifficulty];
       const viewportWidth = window.innerWidth - 60;
       const cellSize = Math.max(22, Math.min(diffConfig.cellSize, Math.floor(viewportWidth / currentBoard.cols)));
-      const gap = 3;
+      const gap = 0;
       const padding = 2;
 
       function getCellRect(r, c) {
@@ -2439,7 +2573,7 @@
             const rect = getCellRect(r, c);
             const p = entry.prob;
             // mint to coral interpolation
-            ctx.fillStyle = p < 0.25 ? 'rgba(127, 203, 160, 0.42)' : (p < 0.6 ? 'rgba(224, 145, 47, 0.42)' : 'rgba(217, 83, 79, 0.45)');
+            ctx.fillStyle = p < 0.25 ? 'rgba(0, 120, 215, 0.35)' : (p < 0.6 ? 'rgba(217, 119, 6, 0.40)' : 'rgba(204, 0, 0, 0.45)');
             
             ctx.beginPath();
             if (ctx.roundRect) ctx.roundRect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2, 6);
@@ -2447,7 +2581,7 @@
             ctx.fill();
 
             ctx.fillStyle = '#14221B';
-            ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
+            ctx.font = 'bold 9px "Segoe UI", Tahoma, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const pct = Math.round(p * 100);
@@ -2463,7 +2597,7 @@
           const c = constraintsList[i];
           const rect = getCellRect(c.r, c.c);
           ctx.lineWidth = 2;
-          ctx.strokeStyle = c.targetMines === 0 ? 'rgba(31, 107, 71, 0.65)' : 'rgba(224, 145, 47, 0.65)';
+          ctx.strokeStyle = c.targetMines === 0 ? 'rgba(0, 128, 0, 0.75)' : 'rgba(217, 119, 6, 0.75)';
           ctx.beginPath();
           if (ctx.roundRect) ctx.roundRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4, 6);
           else ctx.strokeRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
@@ -2473,7 +2607,7 @@
         if (bot.liveState.flippedCell) {
           const rect = getCellRect(bot.liveState.flippedCell.r, bot.liveState.flippedCell.c);
           ctx.lineWidth = 2.5;
-          ctx.strokeStyle = '#7FCBA0';
+          ctx.strokeStyle = '#0078d7';
           ctx.beginPath();
           if (ctx.roundRect) ctx.roundRect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2, 7);
           else ctx.strokeRect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2);
@@ -2488,7 +2622,7 @@
       const diffConfig = CONFIG.difficulties[CONFIG.currentDifficulty];
       const viewportWidth = window.innerWidth - 60;
       const calculatedSize = Math.max(22, Math.min(diffConfig.cellSize, Math.floor(viewportWidth / currentBoard.cols)));
-      const gap = 3;
+      const gap = 0;
       const padding = 2;
 
       dom.boardGrid.style.gridTemplateColumns = `repeat(${currentBoard.cols}, ${calculatedSize}px)`;
@@ -2550,7 +2684,7 @@
       ctx.clearRect(0, 0, w, h);
 
       // Hairline gridlines at 6% opacity
-      ctx.strokeStyle = 'rgba(20, 34, 27, 0.06)';
+      ctx.strokeStyle = 'rgba(30, 80, 140, 0.08)';
       ctx.lineWidth = 1;
       for (let y = 18; y < h; y += 24) {
         ctx.beginPath();
@@ -2586,7 +2720,7 @@
 
       // Zero-score line: dashed amber baseline labeled "solved"
       const yZero = getCoords(0, 0).y;
-      ctx.strokeStyle = 'rgba(224, 145, 47, 0.45)';
+      ctx.strokeStyle = 'rgba(0, 128, 0, 0.55)';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
@@ -2595,8 +2729,8 @@
       ctx.stroke();
       ctx.setLineDash([]);
 
-      ctx.fillStyle = '#E0912F';
-      ctx.font = '500 9px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#008000';
+      ctx.font = '600 9px "Segoe UI", sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText('solved (0)', padLeft + chartW, yZero - 4);
 
@@ -2606,7 +2740,7 @@
         const trailLimit = Math.min(finishedClimbs.length, CONFIG.maxTrailCurves);
         for (let i = Math.max(0, finishedClimbs.length - trailLimit); i < finishedClimbs.length; i++) {
           const c = finishedClimbs[i];
-          ctx.strokeStyle = 'rgba(127, 203, 160, 0.28)';
+          ctx.strokeStyle = 'rgba(70, 150, 230, 0.3)';
           ctx.beginPath();
           for (let s = 0; s < c.trajectory.length; s++) {
             const pt = getCoords(s, c.trajectory[s]);
@@ -2617,7 +2751,7 @@
 
           const lastS = c.trajectory.length - 1;
           const pt = getCoords(lastS, c.trajectory[lastS]);
-          ctx.fillStyle = c.finalStatus === 'solved' ? '#1F6B47' : (c.finalStatus === 'stuck' ? '#E0912F' : '#7A877F');
+          ctx.fillStyle = c.finalStatus === 'solved' ? '#008000' : (c.finalStatus === 'stuck' ? '#d97706' : '#6482a4');
           ctx.beginPath();
           ctx.arc(pt.x, pt.y, 2.5, 0, Math.PI * 2);
           ctx.fill();
@@ -2627,7 +2761,7 @@
       // Current climb: thick forest line with round caps
       if (currentTrajectory && currentTrajectory.length > 0) {
         ctx.lineWidth = 2.8;
-        ctx.strokeStyle = '#1F6B47';
+        ctx.strokeStyle = '#0078d7';
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.beginPath();
@@ -2646,12 +2780,12 @@
         ctx.arc(markerPt.x, markerPt.y, 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = '#1F6B47';
+        ctx.strokeStyle = '#005a9e';
         ctx.stroke();
       }
 
-      ctx.fillStyle = '#7A877F';
-      ctx.font = '500 9px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#6482a4';
+      ctx.font = '500 9px "Segoe UI", Tahoma, sans-serif, sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(maxScore, padLeft - 4, 14);
       ctx.fillText('0', padLeft - 4, yZero + 3);
@@ -2666,7 +2800,7 @@
 
       if (!finishedClimbs || finishedClimbs.length === 0) {
         ctx.fillStyle = '#7A877F';
-        ctx.font = '500 11px "Plus Jakarta Sans", sans-serif';
+        ctx.font = '500 11px "Segoe UI", Tahoma, sans-serif, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Points appear after each finished climb.', w / 2, h / 2);
         return;
@@ -2696,9 +2830,9 @@
         const y = 10 + plotH - (c.finalScore / Math.max(1, maxScore)) * plotH;
 
         if (c.finalScore === 0) {
-          ctx.fillStyle = '#1F6B47';
+          ctx.fillStyle = '#008000';
         } else if (c.finalStatus === 'stuck') {
-          ctx.fillStyle = '#E0912F';
+          ctx.fillStyle = '#d97706';
         } else {
           ctx.fillStyle = '#7A877F';
         }
@@ -2709,7 +2843,7 @@
       }
 
       ctx.fillStyle = '#7A877F';
-      ctx.font = '500 9px "Plus Jakarta Sans", sans-serif';
+      ctx.font = '500 9px "Segoe UI", Tahoma, sans-serif, sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(maxScore, padLeft - 4, 14);
       ctx.fillText('0', padLeft - 4, yZero + 3);
@@ -2724,7 +2858,7 @@
 
       if (!data || !data.neighborhoodScores || data.neighborhoodScores.length === 0) {
         ctx.fillStyle = '#7A877F';
-        ctx.font = '500 11px "Plus Jakarta Sans", sans-serif';
+        ctx.font = '500 11px "Segoe UI", Tahoma, sans-serif, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Candidate flip scores appear during climbs.', w / 2, h / 2);
         return;
@@ -2757,7 +2891,7 @@
         const y = 14 + chartH - barH;
 
         const isChosen = (i === data.bestCandidateIndex);
-        ctx.fillStyle = isChosen ? '#0F3D2A' : 'rgba(127, 203, 160, 0.45)';
+        ctx.fillStyle = isChosen ? '#0078d7' : 'rgba(90, 165, 235, 0.45)';
 
         ctx.beginPath();
         if (ctx.roundRect) ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]);
@@ -2772,7 +2906,7 @@
       }
 
       ctx.fillStyle = '#7A877F';
-      ctx.font = '500 9px "Plus Jakarta Sans", sans-serif';
+      ctx.font = '500 9px "Segoe UI", Tahoma, sans-serif, sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(maxScore, padLeft - 4, 16);
       ctx.fillText('0', padLeft - 4, h - padBottom + 2);
@@ -2961,9 +3095,9 @@
       ctx.clearRect(0, 0, w, h);
 
       const colors = {
-        hill_climbing_only: '#1F6B47',
-        average: '#E0912F',
-        random: '#D9534F'
+        hill_climbing_only: '#0078d7',
+        average: '#d97706',
+        random: '#cc0000'
       };
 
       const barHeight = 18;
@@ -2977,7 +3111,7 @@
         const barW = (winPct / 100) * (w - 180);
 
         ctx.fillStyle = '#7A877F';
-        ctx.font = '600 12px "Plus Jakarta Sans", sans-serif';
+        ctx.font = '600 12px "Segoe UI", Tahoma, sans-serif, sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText(item.name, 140, y + 13);
 
@@ -2994,7 +3128,7 @@
         ctx.fill();
 
         ctx.fillStyle = '#14221B';
-        ctx.font = '700 11px "Plus Jakarta Sans", sans-serif';
+        ctx.font = '700 11px "Segoe UI", Tahoma, sans-serif, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(`${winPct}%`, 156 + barW, y + 13);
       }
@@ -3161,6 +3295,12 @@
       renderBoard();
     }
 
+    dom.boardGrid.addEventListener('mousedown', () => {
+      if (currentBoard && !currentBoard.isGameOver && !currentBoard.isWon) updateFace('surprised');
+    });
+    window.addEventListener('mouseup', () => {
+      if (currentBoard && !currentBoard.isGameOver && !currentBoard.isWon) updateFace('smile');
+    });
     dom.boardGrid.addEventListener('click', handleCellClick);
     dom.boardGrid.addEventListener('contextmenu', handleCellContextMenu);
     dom.boardGrid.addEventListener('auxclick', handleCellAuxOrDblClick);
@@ -3202,6 +3342,7 @@
 
     // Initial game launch
     initGame('beginner');
+  
   </script>
 </body>
 </html>
