@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Autonomous Minesweeper with Hill-Climbing Constraint Solver, Windows 7 Aero Dashboard UI, and Live Telemetry.">
-  <title>Minesweeper • Windows 7 Aero Hill-Climbing Solver</title>
+  <meta name="description" content="Autonomous Minesweeper with Hill-Climbing Constraint Solver, Windows 7 Aero Dashboard, and Live Telemetry.">
+  <title>Minesweeper Lab — Hill Climbing Visualization</title>
   
   <style>
     /* ==========================================================================
@@ -25,12 +25,12 @@
       --ms-black: #000000;
 
       /* Windows 7 Aero Glass Windows */
-      --surface: rgba(255, 255, 255, 0.88);
-      --surface-header: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(235, 244, 253, 0.9) 100%);
+      --surface: rgba(255, 255, 255, 0.90);
+      --surface-header: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(235, 244, 253, 0.92) 100%);
       --surface-subtle: #f0f5fb;
       --surface-border: #7aa1c7;
       --surface-border-subtle: #a8c4e0;
-      --shadow-aero: 0 8px 24px rgba(24, 60, 105, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
+      --shadow-aero: 0 8px 24px rgba(24, 60, 105, 0.16), 0 2px 6px rgba(0, 0, 0, 0.08);
 
       /* Typography & Aero Colors */
       --ink: #10263f;
@@ -49,7 +49,7 @@
       --forest: #008000;
       --forest-pale: #ecfdf5;
 
-      /* Classic Minesweeper Cell Numbers (Exact Windows Colors) */
+      /* Classic Minesweeper Cell Numbers */
       --num-1: #0000ff; /* 1 = Blue */
       --num-2: #008000; /* 2 = Green */
       --num-3: #ff0000; /* 3 = Red */
@@ -59,7 +59,7 @@
       --num-7: #000000; /* 7 = Black */
       --num-8: #808080; /* 8 = Gray */
 
-      /* Classic Windows Dimensions & Fonts */
+      /* Dimensions & Fonts */
       --card-radius: 8px;
       --card-radius-sm: 5px;
       --pill-radius: 4px;
@@ -85,43 +85,39 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px 16px 56px;
+      padding: 18px 16px 48px;
       overflow-x: hidden;
       line-height: 1.5;
     }
 
-    /* Tabular numbers for clean non-jumping metrics */
     .num-tabular {
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum";
     }
 
-    /* Focus rings */
     button:focus-visible, input:focus-visible, select:focus-visible {
       outline: 2px solid var(--aero-blue);
       outline-offset: 2px;
     }
 
-    /* Container */
     .bento-container {
       width: 100%;
-      max-width: 1280px;
+      max-width: 1240px;
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
 
-    /* Windows 7 Aero Window Card */
+    /* Windows 7 Aero Card */
     .bento-card {
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: var(--card-radius);
       box-shadow: var(--shadow-aero), inset 0 1px 0 rgba(255, 255, 255, 0.95);
-      padding: 16px 18px;
+      padding: 14px 16px;
       position: relative;
       overflow: hidden;
       backdrop-filter: blur(10px);
-      transition: border-color var(--transition-base), box-shadow var(--transition-base);
     }
     .bento-card::before {
       content: '';
@@ -129,7 +125,7 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 24px;
+      height: 22px;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 100%);
       pointer-events: none;
     }
@@ -138,12 +134,12 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       gap: 8px;
     }
 
     .card-title {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 700;
       color: var(--ink);
       letter-spacing: -0.01em;
@@ -153,7 +149,7 @@
     }
 
     .card-title-sub {
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 400;
       color: var(--ink-muted);
     }
@@ -162,11 +158,11 @@
     .pill-chip {
       font-size: 11px;
       font-weight: 600;
-      padding: 3px 9px;
+      padding: 2px 8px;
       border-radius: 3px;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       background: #eef4fb;
       border: 1px solid #b3ceea;
       color: var(--ink-muted);
@@ -175,10 +171,9 @@
     .pill-chip.amber { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
     .pill-chip.coral { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
     .pill-chip.forest { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
-    .pill-chip.mint { background: #e1f0fc; border-color: #89bfe8; color: #005a9e; }
 
     /* ==========================================================================
-       ROW 1: WINDOWS 7 TOP BAR
+       1. CLEAN HEADER
        ========================================================================== */
     .top-bar {
       display: flex;
@@ -193,12 +188,12 @@
     .top-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .win7-logo-icon {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -209,6 +204,7 @@
       font-weight: 700;
       letter-spacing: -0.01em;
       color: #0c2847;
+      line-height: 1.2;
     }
 
     .top-subtitle {
@@ -222,7 +218,7 @@
       gap: 12px;
     }
 
-    /* Segmented switch for difficulty (Windows 7 Aero toolbar) */
+    /* Board-size selector */
     .segmented-control {
       background: linear-gradient(180deg, #e4effa 0%, #d0e3f5 100%);
       border: 1px solid #7096c4;
@@ -240,7 +236,7 @@
       font-family: inherit;
       font-size: 12px;
       font-weight: 600;
-      padding: 5px 12px;
+      padding: 4px 12px;
       border-radius: 3px;
       cursor: pointer;
       transition: all var(--transition-base);
@@ -257,12 +253,12 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), inset 0 1px 0 #ffffff;
     }
 
-    /* Status Pill (Aero Badge) */
+    /* Solver status badge */
     .status-pill {
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.02em;
-      padding: 5px 14px;
+      padding: 4px 12px;
       border-radius: 4px;
       display: inline-flex;
       align-items: center;
@@ -287,129 +283,30 @@
     .status-pill.lost { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }
 
     /* ==========================================================================
-       ROW 2: STAT METRICS (MINES LEFT, TIME, CLIMBS, SUCCESS RATE)
+       2 & 3. MAIN FOCUS: MINESWEEPER BOARD + COMPACT STATUS PANEL
        ========================================================================== */
-    .metrics-row {
+    .board-and-status-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: minmax(0, 1fr) 340px;
       gap: 14px;
+      align-items: stretch;
     }
 
-    .stat-card {
+    .board-main-card {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      min-height: 110px;
     }
 
-    .stat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--ink-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    /* Classic Minesweeper LED Digital Numbers Box */
-    .stat-num.num-tabular {
-      background: #000000;
-      color: #ff0000;
-      font-family: var(--font-digital);
-      font-weight: 900;
-      font-size: 38px;
-      letter-spacing: 2px;
-      text-shadow: 0 0 8px rgba(255, 0, 0, 0.8), 0 0 2px #ff0000;
-      border-top: 2px solid #707070;
-      border-left: 2px solid #707070;
-      border-right: 2px solid #ffffff;
-      border-bottom: 2px solid #ffffff;
-      padding: 4px 10px;
-      border-radius: 2px;
-      display: inline-block;
-      margin-top: 6px;
-      line-height: 1.1;
-      text-align: right;
-      width: fit-content;
-      box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.9);
-    }
-
-    /* Climbs & Rate LED variant */
-    .stat-num-blue.num-tabular {
-      background: #081a2f;
-      color: #38bdf8;
-      text-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
-    }
-
-    /* Hero Card (Mines Left) */
-    .hero-stat-card {
-      background: linear-gradient(180deg, #f2f7fc 0%, #e2eefb 100%);
-      border: 1px solid #7096c4;
-      box-shadow: var(--shadow-aero);
-    }
-    .hero-stat-card .stat-label { color: #1c3d64; }
-
-    /* Classic 3D Raised Smiley Face Button */
-    .hero-refresh-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 3px;
-      background: #c0c0c0;
-      border-top: 3px solid #ffffff;
-      border-left: 3px solid #ffffff;
-      border-right: 3px solid #707070;
-      border-bottom: 3px solid #707070;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.08s ease;
-      padding: 0;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-    }
-    .hero-refresh-btn:hover {
-      background: #d0d0d0;
-    }
-    .hero-refresh-btn:active {
-      border-top: 3px solid #707070;
-      border-left: 3px solid #707070;
-      border-right: 3px solid #ffffff;
-      border-bottom: 3px solid #ffffff;
-      background: #b5b5b5;
-    }
-
-    /* Success rate gauge */
-    .stat-gauge-box {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-    }
-
-    /* ==========================================================================
-       ROW 3: BOARD & CONTROLS (WIDE) + CURRENT STEP CARD (NARROW)
-       ========================================================================== */
-    .board-and-step-row {
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 14px;
-      align-items: start;
-    }
-
-    /* Action Bar (Windows 7 Aero Toolbar) */
+    /* Compact Controls Bar */
     .board-controls-bar {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       background: linear-gradient(180deg, #fbfdfe 0%, #edf4fc 100%);
       border: 1px solid #9cbfe3;
       border-radius: var(--card-radius-sm);
-      padding: 10px 14px;
-      margin-bottom: 14px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
       box-shadow: inset 0 1px 0 #ffffff;
     }
 
@@ -418,28 +315,27 @@
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
     }
 
     .pill-btn-group {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
-    /* Windows 7 Aero Glossy Push Button */
     .pill-btn {
       font-family: inherit;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
-      padding: 6px 16px;
+      padding: 5px 14px;
       border-radius: 4px;
       display: inline-flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       cursor: pointer;
       transition: all 0.15s ease;
-      min-height: 32px;
+      min-height: 29px;
       border: 1px solid #7096c4;
       background: linear-gradient(180deg, #ffffff 0%, #eaf2fb 49%, #d4e5f7 50%, #d8e8f8 100%);
       color: #1e395b;
@@ -472,9 +368,7 @@
       box-shadow: 0 0 10px rgba(40, 150, 255, 0.65), inset 0 1px 0 #ffffff;
     }
 
-    .pill-btn-secondary {
-      border-color: #7096c4;
-    }
+    .pill-btn-secondary { border-color: #7096c4; }
 
     .pill-btn-ghost {
       background: transparent;
@@ -493,15 +387,14 @@
       box-shadow: none !important;
     }
 
-    /* Slider styling */
     .speed-slider-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .slider-label {
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
       color: var(--ink-muted);
     }
@@ -509,8 +402,8 @@
     .modern-slider {
       -webkit-appearance: none;
       appearance: none;
-      width: 100px;
-      height: 6px;
+      width: 90px;
+      height: 5px;
       background: #c3d9ef;
       border: 1px solid #8eafce;
       border-radius: 999px;
@@ -520,8 +413,8 @@
     .modern-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       background: linear-gradient(180deg, #ffffff 0%, #d8e8f8 100%);
       border: 1.5px solid #4a82b8;
@@ -533,22 +426,13 @@
       transform: scale(1.15);
       border-color: #0078d7;
     }
-    .modern-slider::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: linear-gradient(180deg, #ffffff 0%, #d8e8f8 100%);
-      border: 1.5px solid #4a82b8;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-      cursor: pointer;
-    }
 
     .controls-sub-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
       padding-top: 6px;
       border-top: 1px solid #d8e7f5;
     }
@@ -556,8 +440,8 @@
     .sub-slider-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 12px;
+      gap: 6px;
+      font-size: 11.5px;
       color: var(--ink-muted);
     }
 
@@ -567,19 +451,18 @@
       border-radius: 3px;
       color: var(--ink);
       font-family: inherit;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
-      padding: 3px 8px;
+      padding: 2px 6px;
       outline: none;
       cursor: pointer;
     }
 
-    /* Toggle Switch */
     .toggle-switch-label {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      font-size: 12px;
+      gap: 6px;
+      font-size: 11.5px;
       font-weight: 500;
       color: var(--ink-muted);
       cursor: pointer;
@@ -594,8 +477,8 @@
     }
 
     .toggle-switch-track {
-      width: 30px;
-      height: 16px;
+      width: 26px;
+      height: 14px;
       border-radius: 999px;
       background: #c3d9ef;
       border: 1px solid #8eafce;
@@ -607,8 +490,8 @@
       position: absolute;
       top: 1px;
       left: 1px;
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       background: #ffffff;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -619,12 +502,10 @@
       border-color: #005a9e;
     }
     .toggle-switch-input:checked + .toggle-switch-track::after {
-      transform: translateX(14px);
+      transform: translateX(12px);
     }
 
-    /* ==========================================================================
-       CLASSIC MINESWEEPER BOARD (MATCHING USER SCREENSHOT EXACTLY)
-       ========================================================================== */
+    /* Classic Minesweeper Board Frame */
     .board-container {
       position: relative;
       max-width: 100%;
@@ -639,6 +520,8 @@
       display: flex;
       justify-content: center;
       box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
+      flex: 1;
+      min-height: 260px;
     }
 
     .board-wrapper {
@@ -685,7 +568,6 @@
       user-select: none;
     }
 
-    /* Classic 3D Beveled Unrevealed Cell */
     .cell.hidden {
       background-color: #c0c0c0;
       border-top: 3px solid #ffffff;
@@ -695,13 +577,12 @@
       box-shadow: none;
     }
     .cell.hidden:hover {
-      background-color: #cdd9e6; /* subtle win7 hover shine */
+      background-color: #cdd9e6;
     }
     .cell.hidden:active {
       border: 1px solid #7b7b7b;
     }
 
-    /* Classic Sunken Flat Revealed Cell */
     .cell.revealed {
       background: #c0c0c0;
       border: 1px solid #7b7b7b;
@@ -713,7 +594,6 @@
       border: 1px solid #7b7b7b;
     }
 
-    /* Classic Number Palette */
     .cell[data-num="1"] { color: var(--num-1); }
     .cell[data-num="2"] { color: var(--num-2); }
     .cell[data-num="3"] { color: var(--num-3); }
@@ -739,7 +619,6 @@
       position: relative;
     }
 
-    /* Live Playback Animations */
     @keyframes win7Pulse {
       0% { box-shadow: inset 0 0 0 2px #0078d7, 0 0 0 0 rgba(0, 120, 215, 0.8); }
       50% { box-shadow: inset 0 0 0 2px #0078d7, 0 0 14px 4px rgba(0, 120, 215, 0.7); }
@@ -778,7 +657,14 @@
       font-weight: 800 !important;
     }
 
-    /* Current Step Card (Right Column) */
+    /* ==========================================================================
+       3. SMALL STATUS PANEL
+       ========================================================================== */
+    .status-panel-card {
+      display: flex;
+      flex-direction: column;
+    }
+
     .step-metrics-card-body {
       display: flex;
       flex-direction: column;
@@ -804,9 +690,11 @@
       font-size: 11px;
       font-weight: 600;
       color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
     }
     .step-subcard .sub-val {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 700;
       color: var(--ink);
       margin-top: 2px;
@@ -824,7 +712,7 @@
     }
 
     /* ==========================================================================
-       ROW 4: CHARTS (SCORE, LANDSCAPE, NEIGHBORHOOD)
+       4. THREE CLEARLY LABELLED GRAPHS UNDERNEATH THE BOARD
        ========================================================================== */
     .charts-triplet-row {
       display: grid;
@@ -832,163 +720,26 @@
       gap: 14px;
     }
 
+    .chart-card {
+      display: flex;
+      flex-direction: column;
+    }
+
     canvas.bento-canvas {
       width: 100%;
+      height: 135px;
       display: block;
       border-radius: var(--card-radius-sm);
       background: #f5f9fd;
       border: 1px solid #b8d2eb;
     }
 
-    #climb-canvas { height: 120px; }
-    #landscape-canvas { height: 120px; }
-    #neighborhood-canvas { height: 120px; }
-
-    /* ==========================================================================
-       ROW 5: LOG, SOLUTIONS, AND HERO DECISION CARD
-       ========================================================================== */
-    .bottom-triplet-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    /* Move Log */
-    .log-container {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      max-height: 140px;
-      overflow-y: auto;
-    }
-
-    .log-item {
-      font-size: 12px;
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 5px 8px;
-      background: #f4f8fd;
-      border-radius: 4px;
-      border: 1px solid #d2e4f6;
-      line-height: 1.35;
-    }
-    .log-item-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .log-item-dot.move { background: var(--aero-blue); }
-    .log-item-dot.solution { background: #008000; }
-    .log-item-dot.stuck { background: var(--coral); }
-    .log-item-dot.sideways { background: var(--amber); }
-
-    /* Solutions Table */
-    .solutions-container {
-      max-height: 140px;
-      overflow-y: auto;
-      border-radius: var(--card-radius-sm);
-      border: 1px solid #b8d2eb;
-      background: #ffffff;
-    }
-
-    .solutions-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-      text-align: left;
-    }
-
-    .solutions-table th {
-      background: linear-gradient(180deg, #f4f8fd 0%, #e5effa 100%);
-      color: var(--ink-muted);
-      font-weight: 600;
-      padding: 6px 10px;
-      border-bottom: 1px solid #b8d2eb;
-    }
-
-    .solutions-table td {
-      padding: 5px 10px;
-      border-bottom: 1px solid #e5effa;
-      color: var(--ink);
-    }
-
-    /* Decision Hero Card (Windows 7 Aero Blue Glass) */
-    .decision-hero-card {
-      background: linear-gradient(135deg, #1b538c 0%, #2976ba 50%, #1b538c 100%);
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      border: 1px solid #6b9ece;
-      box-shadow: var(--shadow-aero);
-    }
-
-    .decision-hero-card .card-title { color: #ffffff; }
-    .decision-headline {
-      font-size: 19px;
-      font-weight: 700;
-      line-height: 1.3;
-      color: #ffffff;
-      margin-top: 8px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-    .decision-subline {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.88);
-      margin-top: 6px;
-    }
-
-    /* Benchmark Section */
-    .benchmark-card {
-      width: 100%;
-    }
-
-    .bench-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      margin-top: 10px;
-    }
-    .bench-table th, .bench-table td {
-      padding: 7px 12px;
-      border-bottom: 1px solid #d8e7f5;
-    }
-    .bench-table th {
-      font-weight: 600;
-      color: var(--ink-muted);
-      background: linear-gradient(180deg, #f4f8fd 0%, #e5effa 100%);
-    }
-
-    #bench-chart {
-      width: 100%;
-      height: 90px;
-      margin-top: 10px;
-      background: #f5f9fd;
-      border: 1px solid #b8d2eb;
-      border-radius: var(--card-radius-sm);
-    }
-
-    /* Motion Accessibility */
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation: none !important;
-        transition: none !important;
-      }
-    }
-
-    /* Responsive Breakpoints */
-    @media (max-width: 1024px) {
-      .metrics-row { grid-template-columns: repeat(2, 1fr); }
-      .board-and-step-row { grid-template-columns: 1fr; }
+    @media (max-width: 960px) {
+      .board-and-status-row { grid-template-columns: 1fr; }
       .charts-triplet-row { grid-template-columns: 1fr; }
-      .bottom-triplet-row { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 640px) {
-      .metrics-row { grid-template-columns: 1fr; }
       .top-bar { flex-direction: column; align-items: flex-start; }
       .top-controls { width: 100%; justify-content: space-between; }
       .controls-main-row { flex-direction: column; align-items: flex-start; }
@@ -999,113 +750,55 @@
 
   <div class="bento-container">
 
-    <!-- ROW 1: WINDOWS 7 TOP BAR -->
+    <!-- 1. CLEAN HEADER -->
     <header class="bento-card top-bar">
       <div class="top-brand">
-        <!-- Classic Windows 7 Orb Style Icon -->
         <span class="win7-logo-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22">
-            <!-- Mine / Win7 Badge -->
+          <svg viewBox="0 0 24 24" width="24" height="24">
             <circle cx="12" cy="12" r="10" fill="#0078d7" stroke="#ffffff" stroke-width="1.5"/>
             <path d="M 12 4 L 12 20 M 4 12 L 20 12 M 6.3 6.3 L 17.7 17.7 M 6.3 17.7 L 17.7 6.3" stroke="#ffffff" stroke-width="1.5"/>
             <circle cx="12" cy="12" r="3.5" fill="#ffffff"/>
           </svg>
         </span>
-        <h1 class="top-title">Minesweeper</h1>
-        <span class="top-subtitle">Windows 7 Edition • Autonomous Hill-Climbing Solver</span>
+        <div>
+          <h1 class="top-title">Minesweeper Lab — Hill Climbing Visualization</h1>
+          <span class="top-subtitle">Real-time local search constraint satisfaction</span>
+        </div>
       </div>
 
       <div class="top-controls">
-        <!-- Difficulty Switch (Toolbar Segmented Control) -->
-        <div class="segmented-control" role="group" aria-label="Difficulty">
+        <!-- Board-size selector -->
+        <div class="segmented-control" role="group" aria-label="Board Size">
           <button class="segment-btn active" id="btn-beginner" data-diff="beginner">9x9</button>
           <button class="segment-btn" id="btn-intermediate" data-diff="intermediate">16x16</button>
           <button class="segment-btn" id="btn-expert" data-diff="expert">30x16</button>
         </div>
 
-        <!-- Status Pill -->
+        <!-- Solver status badge -->
         <div class="status-pill ready" id="bot-status">Ready</div>
       </div>
     </header>
 
-    <!-- ROW 2: FOUR STAT CARDS -->
-    <section class="metrics-row" aria-label="Key Game Statistics">
-      <!-- HERO CARD: Mines Left + Smiley Face Button -->
-      <div class="bento-card stat-card hero-stat-card">
-        <div class="stat-header">
-          <span class="stat-label">Mines Left</span>
-          <button class="hero-refresh-btn" id="face-btn" title="Restart game">
-            <!-- Classic Yellow Smiley Face -->
-            <svg viewBox="0 0 24 24" width="22" height="22">
-              <circle cx="12" cy="12" r="10" fill="#ffdf00" stroke="#000000" stroke-width="1.2"/>
-              <circle cx="8.5" cy="9.5" r="1.4" fill="#000000"/>
-              <circle cx="15.5" cy="9.5" r="1.4" fill="#000000"/>
-              <path d="M 7.5 14.5 Q 12 18.5 16.5 14.5" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-        <div class="stat-num num-tabular" id="mines-counter">010</div>
-      </div>
-
-      <!-- Time Card -->
-      <div class="bento-card stat-card">
-        <div class="stat-header">
-          <span class="stat-label">Time Elapsed</span>
-        </div>
-        <div class="stat-num num-tabular" id="timer-counter">000</div>
-      </div>
-
-      <!-- Climbs Run Card -->
-      <div class="bento-card stat-card">
-        <div class="stat-header">
-          <span class="stat-label">Climbs Run</span>
-        </div>
-        <div class="stat-num stat-num-blue num-tabular" id="cnt-climbs">0</div>
-      </div>
-
-      <!-- Success Rate Card with Gauge -->
-      <div class="bento-card stat-card">
-        <div class="stat-header">
-          <span class="stat-label">Success Rate</span>
-        </div>
-        <div class="stat-gauge-box">
-          <div class="stat-num stat-num-blue num-tabular" id="cnt-rate">0%</div>
-          <!-- Semicircle SVG Gauge -->
-          <svg viewBox="0 0 60 32" width="58" height="30" aria-hidden="true">
-            <path d="M 6 30 A 24 24 0 0 1 54 30" fill="none" stroke="#c3d9ef" stroke-width="6" stroke-linecap="round"/>
-            <path id="gauge-arc" d="M 6 30 A 24 24 0 0 1 54 30" fill="none" stroke="#0078d7" stroke-width="6" stroke-linecap="round" stroke-dasharray="75.4" stroke-dashoffset="75.4"/>
-          </svg>
-        </div>
-      </div>
-    </section>
-
-    <!-- ROW 3: BOARD (WIDE) + CURRENT STEP CARD (NARROW) -->
-    <div class="board-and-step-row">
-      <!-- Board Card -->
-      <main class="bento-card" style="display: flex; flex-direction: column;">
-        <div class="card-header-row">
-          <span class="card-title">
-            Minesweeper Board
-            <span class="card-title-sub">Interactive constraint environment</span>
-          </span>
-        </div>
-
-        <!-- Controls Action Bar -->
+    <!-- 2 & 3. MAIN FOCUS: BOARD WITH COMPACT CONTROLS + SMALL STATUS PANEL -->
+    <div class="board-and-status-row">
+      <!-- Main Board Card -->
+      <main class="bento-card board-main-card">
+        <!-- Compact Controls Action Bar -->
         <div class="board-controls-bar">
           <div class="controls-main-row">
             <div class="pill-btn-group">
               <button class="pill-btn pill-btn-primary" id="btn-bot-start">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 Start
               </button>
               <button class="pill-btn pill-btn-secondary" id="btn-bot-stop" disabled>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
                 Stop
               </button>
               <button class="pill-btn pill-btn-ghost" id="btn-bot-reset">Reset</button>
             </div>
 
-            <!-- Single Speed Slider -->
+            <!-- Speed Slider -->
             <div class="speed-slider-wrap">
               <span class="slider-label">Speed:</span>
               <input type="range" class="modern-slider" id="speed-slider" min="1" max="30" value="10">
@@ -1126,13 +819,13 @@
 
             <div class="sub-slider-item">
               <span>Climbs:</span>
-              <input type="range" class="modern-slider" id="climbs-slider" min="10" max="500" step="10" value="100" style="width: 70px;">
+              <input type="range" class="modern-slider" id="climbs-slider" min="10" max="500" step="10" value="100" style="width: 65px;">
               <span class="pill-chip num-tabular" id="climbs-val">100</span>
             </div>
 
             <div class="sub-slider-item">
               <span>Sideways:</span>
-              <input type="range" class="modern-slider" id="sideways-slider" min="0" max="50" value="20" style="width: 60px;">
+              <input type="range" class="modern-slider" id="sideways-slider" min="0" max="50" value="20" style="width: 55px;">
               <span class="pill-chip num-tabular" id="sideways-val">20</span>
             </div>
 
@@ -1150,7 +843,7 @@
           </div>
         </div>
 
-        <!-- Board Container (Classic Beveled Frame) -->
+        <!-- Classic Minesweeper Board -->
         <div class="board-container" id="board-container">
           <div class="board-wrapper" id="board-wrapper">
             <div class="board-grid" id="board-grid" role="grid"></div>
@@ -1159,12 +852,15 @@
         </div>
       </main>
 
-      <!-- Current Step Card -->
-      <aside class="bento-card" id="step-card">
+      <!-- 3. SMALL STATUS PANEL -->
+      <aside class="bento-card status-panel-card" id="step-card">
         <div class="card-header-row">
-          <span class="card-title">Current Step</span>
+          <span class="card-title">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--aero-blue)" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Solver Status
+          </span>
           <div style="display:flex; align-items:center; gap:6px;">
-            <span class="pill-chip amber" id="card-fast-badge" style="display:none;">Fast-forwarding</span>
+            <span class="pill-chip amber" id="card-fast-badge" style="display:none;">10x Fast</span>
             <span class="pill-chip aero" id="card-move-type">Ready</span>
           </div>
         </div>
@@ -1172,165 +868,105 @@
         <div class="step-metrics-card-body">
           <div class="step-grid-2x2">
             <div class="step-subcard">
-              <span class="sub-label">Climb Progress</span>
-              <span class="sub-val" id="card-climb-info">Climb 0 / 0</span>
+              <span class="sub-label">Current Climb</span>
+              <span class="sub-val" id="card-climb-info">Climb 0 / 100</span>
             </div>
             <div class="step-subcard">
-              <span class="sub-label">Step Number</span>
+              <span class="sub-label">Current Step</span>
               <span class="sub-val" id="card-step-num">0</span>
+            </div>
+          </div>
+
+          <div class="step-grid-2x2">
+            <div class="step-subcard">
+              <span class="sub-label">Current Score (Violations)</span>
+              <span class="sub-val" id="card-score-change">-</span>
             </div>
             <div class="step-subcard">
               <span class="sub-label">Flipped Cell</span>
               <span class="sub-val" id="card-flipped-cell">None</span>
             </div>
-            <div class="step-subcard">
-              <span class="sub-label">Value Transition</span>
-              <span class="sub-val" id="card-flip-val">-</span>
-            </div>
           </div>
 
           <div class="step-subcard">
-            <span class="sub-label">Score Change (Violations)</span>
-            <span class="sub-val" id="card-score-change">-</span>
-          </div>
-
-          <div class="step-grid-2x2">
-            <div class="step-subcard">
-              <span class="sub-label">Unique Solutions</span>
-              <span class="sub-val" id="cnt-unique">0</span>
-            </div>
-            <div class="step-subcard">
-              <span class="sub-label">Stuck Plateaus</span>
-              <span class="sub-val" id="cnt-stuck">0</span>
+            <span class="sub-label">Selected Move</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px;">
+              <span class="sub-val" id="decision-callout" style="font-size:13px; font-weight:700; color:var(--aero-blue);">Awaiting first move</span>
+              <span class="sub-val" id="card-flip-val" style="font-size:12px; color:var(--ink-muted);">-</span>
             </div>
           </div>
 
-          <!-- Explainer Summary -->
+          <!-- Concise explanation of the current move -->
           <div class="step-live-info" id="explainer-box">
-            Press Start to watch the first automated climb.
+            Press Start to watch the automated hill-climbing search minimize constraint violations on the frontier.
           </div>
         </div>
       </aside>
     </div>
 
-    <!-- ROW 4: CHARTS TRIPLET (SCORE TRAJECTORY, LANDSCAPE, NEIGHBORHOOD) -->
-    <section class="charts-triplet-row" aria-label="Search Landscape Telemetry">
-      <!-- Score Trajectory -->
-      <div class="bento-card">
+    <!-- 4. THREE CLEARLY LABELLED GRAPHS UNDERNEATH THE BOARD -->
+    <section class="charts-triplet-row" aria-label="Hill Climbing Telemetry">
+      <!-- 1. Score Trajectory -->
+      <div class="bento-card chart-card">
         <div class="card-header-row">
-          <span class="card-title">Score Trajectory</span>
-          <span class="pill-chip aero">Current Climb</span>
+          <span class="card-title">
+            Score Trajectory
+            <span class="card-title-sub">Current climb score vs step</span>
+          </span>
+          <span class="pill-chip aero">Active Climb</span>
         </div>
-        <canvas class="bento-canvas" id="climb-canvas" width="440" height="120"></canvas>
+        <canvas class="bento-canvas" id="climb-canvas" width="440" height="135"></canvas>
       </div>
 
-      <!-- Landscape View -->
-      <div class="bento-card">
+      <!-- 2. Landscape View -->
+      <div class="bento-card chart-card">
         <div class="card-header-row">
-          <span class="card-title">Landscape View</span>
+          <span class="card-title">
+            Landscape View
+            <span class="card-title-sub">Final score across restarts</span>
+          </span>
           <span class="pill-chip">Climb vs Score</span>
         </div>
-        <canvas class="bento-canvas" id="landscape-canvas" width="440" height="120"></canvas>
+        <canvas class="bento-canvas" id="landscape-canvas" width="440" height="135"></canvas>
       </div>
 
-      <!-- Neighborhood View -->
-      <div class="bento-card">
+      <!-- 3. Neighborhood Flips -->
+      <div class="bento-card chart-card">
         <div class="card-header-row">
-          <span class="card-title">Neighborhood Flips</span>
-          <span class="pill-chip aero">Steepest Ascent</span>
+          <span class="card-title">
+            Neighborhood Flips
+            <span class="card-title-sub">Steepest-ascent candidate scores</span>
+          </span>
+          <span class="pill-chip aero">Neighborhood</span>
         </div>
-        <canvas class="bento-canvas" id="neighborhood-canvas" width="440" height="120"></canvas>
-      </div>
-    </section>
-
-    <!-- ROW 5: MOVE LOG, SOLUTIONS TABLE, HERO DECISION CARD -->
-    <section class="bottom-triplet-row">
-      <!-- Move Log -->
-      <div class="bento-card">
-        <div class="card-header-row">
-          <span class="card-title">Move Log</span>
-          <span class="pill-chip">Last 10 Events</span>
-        </div>
-        <div class="log-container" id="move-log">
-          <div class="log-item">
-            <span class="log-item-dot move"></span>
-            <span>Engine ready. Press Start to play.</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Solutions Table -->
-      <div class="bento-card">
-        <div class="card-header-row">
-          <span class="card-title">Solutions Table</span>
-          <span class="pill-chip aero" id="solutions-count-badge">0 unique</span>
-        </div>
-        <div class="solutions-container">
-          <table class="solutions-table">
-            <thead>
-              <tr>
-                <th style="width: 28px;">#</th>
-                <th>Mine locations</th>
-                <th style="width: 60px;">Reached</th>
-                <th style="width: 55px;">Share</th>
-              </tr>
-            </thead>
-            <tbody id="solutions-tbody">
-              <tr><td colspan="4" style="text-align:center; color:var(--ink-muted); padding:16px;">Awaiting search results...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Hero Decision Card -->
-      <div class="bento-card decision-hero-card">
-        <div>
-          <div class="card-header-row">
-            <span class="card-title">Solver Decision</span>
-            <span class="pill-chip" style="background:rgba(255,255,255,0.2); border-color:transparent; color:#FFFFFF;">Next Move</span>
-          </div>
-          <div class="decision-headline" id="decision-callout">
-            Awaiting first move
-          </div>
-          <div class="decision-subline">
-            The hill-climbing search samples candidate layouts and minimizes constraint violations.
-          </div>
-        </div>
-        <!-- Status banner for victory / game over -->
-        <div id="status-banner" style="display:none;"></div>
-      </div>
-    </section>
-
-    <!-- ROW 6: BENCHMARK SUITE -->
-    <section class="bento-card benchmark-card">
-      <div class="card-header-row">
-        <span class="card-title">Algorithm Benchmark</span>
-        <div class="pill-btn-group">
-          <button class="pill-btn pill-btn-secondary" id="btn-run-100">Run 100 Games</button>
-          <button class="pill-btn pill-btn-primary" id="btn-compare-all">Compare All Three</button>
-        </div>
-      </div>
-
-      <div id="bench-results" style="display: none;">
-        <table class="bench-table">
-          <thead>
-            <tr>
-              <th>Algorithm</th>
-              <th>Win Rate</th>
-              <th>Avg Guesses</th>
-              <th>Sol/Session</th>
-            </tr>
-          </thead>
-          <tbody id="bench-tbody"></tbody>
-        </table>
-        <canvas id="bench-chart" width="800" height="90"></canvas>
+        <canvas class="bento-canvas" id="neighborhood-canvas" width="440" height="135"></canvas>
       </div>
     </section>
 
   </div>
 
-  <!-- Unobtrusive Hidden elements kept for compatibility -->
-  <div style="display:none;" id="lab-panel"><div id="lab-toggle-btn"></div><span id="cnt-solutions">0</span><span id="cnt-avgsteps">0.0</span></div>
+  <!-- Unobtrusive Hidden Elements (Preserved so any existing JS functions remain 100% safe) -->
+  <div style="display:none;" id="unobtrusive-compat-elements">
+    <div id="mines-counter"></div>
+    <div id="timer-counter"></div>
+    <button id="face-btn"></button>
+    <div id="cnt-climbs"></div>
+    <div id="cnt-rate"></div>
+    <div id="cnt-unique"></div>
+    <div id="cnt-stuck"></div>
+    <div id="cnt-solutions"></div>
+    <div id="cnt-avgsteps"></div>
+    <svg><path id="gauge-arc"></path></svg>
+    <div id="move-log"></div>
+    <div id="solutions-count-badge"></div>
+    <table><tbody id="solutions-tbody"></tbody></table>
+    <div id="status-banner"></div>
+    <button id="btn-run-100"></button>
+    <button id="btn-compare-all"></button>
+    <div id="bench-results"></div>
+    <table><tbody id="bench-tbody"></tbody></table>
+    <canvas id="bench-chart"></canvas>
+  </div>
 
   <script>
     /* ==========================================================================
@@ -2282,9 +1918,10 @@
     };
 
     function updateDecisionCallout(headline, subline) {
-      dom.decisionCallout.textContent = headline;
-      const subEl = dom.decisionCallout.nextElementSibling;
-      if (subEl) subEl.textContent = subline;
+      if (dom.decisionCallout) dom.decisionCallout.textContent = headline;
+      if (dom.explainerBox && subline) {
+        dom.explainerBox.textContent = subline;
+      }
     }
 
     function addMoveLog(text, type = 'move') {
@@ -2334,11 +1971,12 @@
     }
 
     function updateExplainerBox(frontierK, constraintsC, climbs, solutions, unique, stuck, rate) {
+      if (!dom.explainerBox) return;
       if (frontierK === 0) {
-        dom.explainerBox.textContent = `Press Start to watch the first automated climb.`;
+        dom.explainerBox.textContent = 'Press Start to begin autonomous hill-climbing search on the frontier.';
         return;
       }
-      dom.explainerBox.textContent = `Active frontier: ${frontierK} cells, ${constraintsC} constraints. Executed ${climbs} restarts (${unique} unique solutions, ${rate} success).`;
+      dom.explainerBox.textContent = `Frontier: ${frontierK} unknown cells, ${constraintsC} active constraints. Evaluated ${climbs} restarts to minimize constraint violations.`;
     }
 
     function updateSolutionsTable(solutions) {
@@ -3342,6 +2980,7 @@
 
     // Initial game launch
     initGame('beginner');
+  
   
   </script>
 </body>
