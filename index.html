@@ -1,0 +1,3207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Autonomous Minesweeper with Hill-Climbing Constraint Solver, Bento Dashboard UI, and Live Telemetry.">
+  <title>Minesweeper Lab • Hill-Climbing Solver</title>
+  
+  <!-- Typography: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       SECTION 1: COLOR TOKENS & DESIGN SYSTEM (BENTO DASHBOARD)
+       ========================================================================== */
+    :root {
+      /* Palette Tokens */
+      --bg: #F1F3F0;
+      --surface: #FFFFFF;
+      --surface-subtle: #F8FAF8;
+      --surface-border: rgba(20, 34, 27, 0.08);
+      --surface-border-subtle: rgba(20, 34, 27, 0.04);
+      --ink: #14221B;
+      --ink-muted: #7A877F;
+      --ink-subtle: #A3AEA7;
+      --forest: #1F6B47;
+      --forest-hover: #185538;
+      --forest-deep: #0F3D2A;
+      --mint: #7FCBA0;
+      --mint-pale: #E3F2EA;
+      --amber: #E0912F;
+      --amber-pale: #FDF3E7;
+      --coral: #D9534F;
+      --coral-pale: #FCEBEA;
+
+      /* Cell Tokens */
+      --cell-hidden-bg: #E8ECE8;
+      --cell-hidden-hatch: rgba(122, 135, 127, 0.14);
+      --cell-revealed-bg: #FFFFFF;
+      --cell-zero-bg: #F1F4F1;
+      --cell-border: rgba(20, 34, 27, 0.07);
+
+      /* Number Palette: Green-to-Teal for 1-3, Amber for 4-5, Coral for 6-8 */
+      --num-1: #1F6B47;
+      --num-2: #248256;
+      --num-3: #127976;
+      --num-4: #C97D1E;
+      --num-5: #E0912F;
+      --num-6: #D9534F;
+      --num-7: #B93D39;
+      --num-8: #8A2220;
+
+      /* Bento Shadows & Radii */
+      --card-radius: 22px;
+      --card-radius-sm: 14px;
+      --pill-radius: 9999px;
+      --shadow-bento: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(15, 61, 42, 0.06);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-float: 0 12px 32px rgba(15, 61, 42, 0.12);
+
+      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --transition-base: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0C1511;
+        --surface: #14211A;
+        --surface-subtle: #182820;
+        --surface-border: rgba(255, 255, 255, 0.08);
+        --surface-border-subtle: rgba(255, 255, 255, 0.04);
+        --ink: #E8EFEA;
+        --ink-muted: #94A39B;
+        --ink-subtle: #617068;
+        --forest: #29865A;
+        --forest-hover: #329D6B;
+        --forest-deep: #0B2519;
+        --mint: #8FE0B1;
+        --mint-pale: #1A3326;
+        --amber: #EBA545;
+        --amber-pale: #30200E;
+        --coral: #E56B67;
+        --coral-pale: #331514;
+
+        --cell-hidden-bg: #1B2C23;
+        --cell-hidden-hatch: rgba(143, 224, 177, 0.08);
+        --cell-revealed-bg: #131E18;
+        --cell-zero-bg: #0E1813;
+        --cell-border: rgba(255, 255, 255, 0.06);
+
+        --shadow-bento: 0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 64px;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Tabular numbers for clean non-jumping metrics */
+    .num-tabular {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+
+    /* Focus rings */
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--forest);
+      outline-offset: 2px;
+    }
+
+    /* Container */
+    .bento-container {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Bento Card Primitive */
+    .bento-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow-bento);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color var(--transition-base), box-shadow var(--transition-base);
+    }
+
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title-sub {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--ink-muted);
+    }
+
+    /* Circular icon button */
+    .icon-btn-round {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface-subtle);
+      border: 1px solid var(--surface-border);
+      color: var(--ink-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+    .icon-btn-round:hover {
+      color: var(--ink);
+      background: var(--mint-pale);
+      border-color: var(--mint);
+    }
+
+    /* Chips */
+    .pill-chip {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: var(--pill-radius);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--surface-border);
+      color: var(--ink-muted);
+    }
+    .pill-chip.mint { background: var(--mint-pale); border-color: var(--mint); color: var(--forest); }
+    .pill-chip.amber { background: var(--amber-pale); border-color: var(--amber); color: var(--amber); }
+    .pill-chip.coral { background: var(--coral-pale); border-color: var(--coral); color: var(--coral); }
+    .pill-chip.forest { background: var(--forest-deep); border-color: var(--forest); color: #FFFFFF; }
+
+    /* ==========================================================================
+       ROW 1: SLIM TOP BAR
+       ========================================================================== */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px 20px;
+    }
+
+    .top-brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .top-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .top-subtitle {
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Segmented pill switch for difficulty */
+    .segmented-control {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--pill-radius);
+      padding: 3px;
+      display: flex;
+      gap: 2px;
+    }
+
+    .segment-btn {
+      background: transparent;
+      border: none;
+      color: var(--ink-muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--pill-radius);
+      cursor: pointer;
+      transition: background-color var(--transition-base), color var(--transition-base), box-shadow var(--transition-base);
+    }
+    .segment-btn:hover { color: var(--ink); }
+    .segment-btn.active {
+      background: var(--surface);
+      color: var(--forest);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Status Pill */
+    .status-pill {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 6px 14px;
+      border-radius: var(--pill-radius);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid transparent;
+      transition: all var(--transition-base);
+    }
+    .status-pill::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .status-pill.ready { background: var(--bg); border-color: var(--surface-border); color: var(--ink-muted); }
+    .status-pill.running { background: var(--mint-pale); border-color: var(--mint); color: var(--forest); }
+    .status-pill.stopped { background: var(--amber-pale); border-color: var(--amber); color: var(--amber); }
+    .status-pill.won { background: var(--mint-pale); border-color: var(--mint); color: var(--forest); }
+    .status-pill.lost { background: var(--coral-pale); border-color: var(--coral); color: var(--coral); }
+
+    /* ==========================================================================
+       ROW 2: STAT METRICS (HERO CARD + 3 STAT CARDS)
+       ========================================================================== */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 120px;
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-muted);
+    }
+
+    .stat-num {
+      font-size: 44px;
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      margin-top: 8px;
+    }
+
+    /* Hero Card (Mines Left) */
+    .hero-stat-card {
+      background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest) 100%);
+      color: #FFFFFF;
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 24px rgba(15, 61, 42, 0.18);
+    }
+    .hero-stat-card .stat-label { color: rgba(255, 255, 255, 0.82); }
+    .hero-stat-card .stat-num { color: #FFFFFF; }
+
+    .hero-refresh-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-base);
+    }
+    .hero-refresh-btn:hover {
+      background: rgba(255, 255, 255, 0.28);
+      transform: rotate(35deg);
+    }
+
+    /* Success rate gauge */
+    .stat-gauge-box {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    /* ==========================================================================
+       ROW 3: BOARD & CONTROLS (WIDE) + CURRENT STEP CARD (NARROW)
+       ========================================================================== */
+    .board-and-step-row {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* Action Bar (Pill buttons & Master Speed Slider) */
+    .board-controls-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--card-radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .controls-main-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .pill-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Pill Buttons */
+    .pill-btn {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: var(--pill-radius);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      border: 1px solid transparent;
+      min-height: 40px;
+    }
+
+    .pill-btn-primary {
+      background: var(--forest);
+      color: #FFFFFF;
+    }
+    .pill-btn-primary:hover:not(:disabled) {
+      background: var(--forest-hover);
+      box-shadow: 0 4px 12px rgba(31, 107, 71, 0.28);
+    }
+
+    .pill-btn-secondary {
+      background: var(--surface);
+      border-color: var(--surface-border);
+      color: var(--ink);
+    }
+    .pill-btn-secondary:hover:not(:disabled) {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    .pill-btn-ghost {
+      background: transparent;
+      color: var(--ink-muted);
+    }
+    .pill-btn-ghost:hover:not(:disabled) {
+      background: rgba(20, 34, 27, 0.05);
+      color: var(--ink);
+    }
+
+    .pill-btn:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+
+    /* Slider styling with rounded thumb */
+    .speed-slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slider-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-muted);
+    }
+
+    .modern-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100px;
+      height: 8px;
+      background: var(--mint-pale);
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+    }
+    .modern-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 2px solid var(--forest);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .modern-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    .modern-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 2px solid var(--forest);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+    }
+
+    .controls-sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-top: 8px;
+      border-top: 1px solid var(--surface-border-subtle);
+    }
+
+    .sub-slider-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+
+    .sub-slider-item select {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--pill-radius);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Modern Toggle Switch */
+    .toggle-switch-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-switch-input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-switch-track {
+      width: 32px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--surface-border);
+      position: relative;
+      transition: background-color var(--transition-base);
+    }
+    .toggle-switch-track::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+      transition: transform var(--transition-base);
+    }
+    .toggle-switch-input:checked + .toggle-switch-track {
+      background: var(--forest);
+    }
+    .toggle-switch-input:checked + .toggle-switch-track::after {
+      transform: translateX(14px);
+    }
+
+    /* Board Viewport */
+    .board-container {
+      position: relative;
+      max-width: 100%;
+      overflow: auto;
+      border-radius: var(--card-radius-sm);
+      background: var(--surface-subtle);
+      border: 1px solid var(--surface-border);
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .board-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .board-grid {
+      display: grid;
+      gap: 3px;
+      background: transparent;
+      padding: 2px;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    #overlay-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Cells */
+    .cell {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background-color var(--transition-base), transform 0.08s ease;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    .cell.hidden {
+      background-color: var(--cell-hidden-bg);
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 6px, var(--cell-hidden-hatch) 6px, var(--cell-hidden-hatch) 7px);
+      border: 1px solid var(--cell-border);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+    .cell.hidden:hover {
+      background-color: var(--mint-pale);
+      border-color: var(--mint);
+    }
+
+    .cell.revealed {
+      background: var(--cell-revealed-bg);
+      border: 1px solid var(--surface-border-subtle);
+      cursor: default;
+    }
+
+    .cell.revealed.zero {
+      background: var(--cell-zero-bg);
+      background-image: none;
+      border-color: transparent;
+    }
+
+    .cell[data-num="1"] { color: var(--num-1); }
+    .cell[data-num="2"] { color: var(--num-2); }
+    .cell[data-num="3"] { color: var(--num-3); }
+    .cell[data-num="4"] { color: var(--num-4); }
+    .cell[data-num="5"] { color: var(--num-5); }
+    .cell[data-num="6"] { color: var(--num-6); }
+    .cell[data-num="7"] { color: var(--num-7); }
+    .cell[data-num="8"] { color: var(--num-8); }
+
+    .cell.mine { background: var(--coral-pale); }
+    .cell.mine-exploded { background: var(--coral) !important; color: #FFFFFF; }
+
+    .cell.wrong-flag {
+      background: var(--coral-pale);
+      position: relative;
+    }
+
+    /* Live Playback Cell Pulse & Constraints */
+    @keyframes mintPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(127, 203, 160, 0.9); }
+      50% { transform: scale(1.15); box-shadow: 0 0 16px 4px rgba(127, 203, 160, 0.7); }
+      100% { transform: scale(1); box-shadow: 0 0 2px rgba(127, 203, 160, 0.3); }
+    }
+
+    .cell-just-flipped {
+      animation: mintPulse 0.4s ease-in-out !important;
+      border: 2px solid var(--mint) !important;
+      z-index: 6;
+    }
+
+    .frontier-simulated-mine {
+      background: var(--coral-pale) !important;
+      border: 1px dashed var(--coral) !important;
+    }
+
+    .frontier-simulated-safe {
+      background: var(--mint-pale) !important;
+      border: 1px dashed var(--mint) !important;
+      color: var(--forest) !important;
+    }
+
+    .cell.constraint-satisfied {
+      background: var(--mint-pale) !important;
+      border: 1.5px solid var(--mint) !important;
+      color: var(--forest) !important;
+      font-size: 0.76rem !important;
+      font-weight: 800 !important;
+    }
+
+    .cell.constraint-violated {
+      background: var(--amber-pale) !important;
+      border: 1.5px solid var(--amber) !important;
+      color: var(--amber) !important;
+      font-size: 0.76rem !important;
+      font-weight: 800 !important;
+    }
+
+    /* Current Step Card (Right Column) */
+    .step-metrics-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step-grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .step-subcard {
+      background: var(--surface-subtle);
+      border: 1px solid var(--surface-border-subtle);
+      border-radius: var(--card-radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .step-subcard .sub-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--ink-muted);
+    }
+    .step-subcard .sub-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .step-live-info {
+      background: var(--mint-pale);
+      border: 1px solid var(--mint);
+      border-radius: var(--card-radius-sm);
+      padding: 12px;
+      color: var(--forest);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    /* ==========================================================================
+       ROW 4: CHARTS (SCORE, LANDSCAPE, NEIGHBORHOOD)
+       ========================================================================== */
+    .charts-triplet-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    canvas.bento-canvas {
+      width: 100%;
+      display: block;
+      border-radius: var(--card-radius-sm);
+      background: var(--surface-subtle);
+      border: 1px solid var(--surface-border-subtle);
+    }
+
+    #climb-canvas { height: 120px; }
+    #landscape-canvas { height: 120px; }
+    #neighborhood-canvas { height: 120px; }
+
+    /* ==========================================================================
+       ROW 5: LOG, SOLUTIONS, AND HERO DECISION CARD
+       ========================================================================== */
+    .bottom-triplet-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    /* Move Log rows with clean dot markers */
+    .log-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .log-item {
+      font-size: 12px;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      background: var(--surface-subtle);
+      border-radius: 8px;
+      border: 1px solid var(--surface-border-subtle);
+      line-height: 1.35;
+    }
+    .log-item-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .log-item-dot.move { background: var(--mint); }
+    .log-item-dot.solution { background: var(--forest); }
+    .log-item-dot.stuck { background: var(--coral); }
+    .log-item-dot.sideways { background: var(--amber); }
+
+    /* Solutions Table */
+    .solutions-container {
+      max-height: 140px;
+      overflow-y: auto;
+      border-radius: var(--card-radius-sm);
+      border: 1px solid var(--surface-border-subtle);
+    }
+
+    .solutions-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .solutions-table th {
+      background: var(--surface-subtle);
+      color: var(--ink-muted);
+      font-weight: 600;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .solutions-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--surface-border-subtle);
+      color: var(--ink);
+    }
+
+    /* Decision Hero Card */
+    .decision-hero-card {
+      background: linear-gradient(135deg, var(--forest-deep) 0%, #174E35 100%);
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 24px rgba(15, 61, 42, 0.16);
+    }
+
+    .decision-hero-card .card-title { color: #FFFFFF; }
+    .decision-headline {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #FFFFFF;
+      margin-top: 8px;
+    }
+    .decision-subline {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.78);
+      margin-top: 6px;
+    }
+
+    /* Benchmark Section */
+    .benchmark-card {
+      width: 100%;
+    }
+
+    .bench-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .bench-table th, .bench-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--surface-border-subtle);
+    }
+    .bench-table th {
+      font-weight: 600;
+      color: var(--ink-muted);
+      background: var(--surface-subtle);
+    }
+
+    #bench-chart {
+      width: 100%;
+      height: 90px;
+      margin-top: 12px;
+      background: var(--surface-subtle);
+      border-radius: var(--card-radius-sm);
+    }
+
+    /* Motion Accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 1024px) {
+      .metrics-row { grid-template-columns: repeat(2, 1fr); }
+      .board-and-step-row { grid-template-columns: 1fr; }
+      .charts-triplet-row { grid-template-columns: 1fr; }
+      .bottom-triplet-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .metrics-row { grid-template-columns: 1fr; }
+      .top-bar { flex-direction: column; align-items: flex-start; }
+      .top-controls { width: 100%; justify-content: space-between; }
+      .controls-main-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bento-container">
+
+    <!-- ROW 1: SLIM TOP BAR -->
+    <header class="bento-card top-bar">
+      <div class="top-brand">
+        <h1 class="top-title">Minesweeper Lab</h1>
+        <span class="top-subtitle">Autonomous Hill-Climbing Solver</span>
+      </div>
+
+      <div class="top-controls">
+        <!-- Difficulty Switch (Pill Segmented Control) -->
+        <div class="segmented-control" role="group" aria-label="Difficulty">
+          <button class="segment-btn active" id="btn-beginner" data-diff="beginner">9x9</button>
+          <button class="segment-btn" id="btn-intermediate" data-diff="intermediate">16x16</button>
+          <button class="segment-btn" id="btn-expert" data-diff="expert">30x16</button>
+        </div>
+
+        <!-- Status Pill -->
+        <div class="status-pill ready" id="bot-status">Ready</div>
+      </div>
+    </header>
+
+    <!-- ROW 2: FOUR STAT CARDS -->
+    <section class="metrics-row" aria-label="Key Game Statistics">
+      <!-- HERO CARD: Mines Left + Refresh Icon Button -->
+      <div class="bento-card stat-card hero-stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Mines left</span>
+          <button class="hero-refresh-btn" id="face-btn" title="Restart game">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="stat-num num-tabular" id="mines-counter">010</div>
+      </div>
+
+      <!-- Time Card -->
+      <div class="bento-card stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Time elapsed</span>
+        </div>
+        <div class="stat-num num-tabular" id="timer-counter">000</div>
+      </div>
+
+      <!-- Climbs Run Card -->
+      <div class="bento-card stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Climbs run</span>
+        </div>
+        <div class="stat-num num-tabular" id="cnt-climbs">0</div>
+      </div>
+
+      <!-- Success Rate Card with Gauge -->
+      <div class="bento-card stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Success rate</span>
+        </div>
+        <div class="stat-gauge-box">
+          <div class="stat-num num-tabular" id="cnt-rate">0%</div>
+          <!-- Semicircle SVG Gauge -->
+          <svg viewBox="0 0 60 32" width="58" height="30" aria-hidden="true">
+            <path d="M 6 30 A 24 24 0 0 1 54 30" fill="none" stroke="var(--mint-pale)" stroke-width="6" stroke-linecap="round"/>
+            <path id="gauge-arc" d="M 6 30 A 24 24 0 0 1 54 30" fill="none" stroke="var(--forest)" stroke-width="6" stroke-linecap="round" stroke-dasharray="75.4" stroke-dashoffset="75.4"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 3: BOARD (WIDE) + CURRENT STEP CARD (NARROW) -->
+    <div class="board-and-step-row">
+      <!-- Board Card -->
+      <main class="bento-card" style="display: flex; flex-direction: column;">
+        <div class="card-header-row">
+          <span class="card-title">
+            Puzzle board
+            <span class="card-title-sub">Interactive constraint environment</span>
+          </span>
+        </div>
+
+        <!-- Controls Action Bar -->
+        <div class="board-controls-bar">
+          <div class="controls-main-row">
+            <div class="pill-btn-group">
+              <button class="pill-btn pill-btn-primary" id="btn-bot-start">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Start
+              </button>
+              <button class="pill-btn pill-btn-secondary" id="btn-bot-stop" disabled>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+                Stop
+              </button>
+              <button class="pill-btn pill-btn-ghost" id="btn-bot-reset">Reset</button>
+            </div>
+
+            <!-- Single Speed Slider -->
+            <div class="speed-slider-wrap">
+              <span class="slider-label">Speed:</span>
+              <input type="range" class="modern-slider" id="speed-slider" min="1" max="30" value="10">
+              <span class="pill-chip mint num-tabular" id="speed-val">10/s</span>
+            </div>
+          </div>
+
+          <div class="controls-sub-row">
+            <div class="sub-slider-item">
+              <span>Mode:</span>
+              <select id="algo-select">
+                <option value="hill_climbing_only" selected>Hill Climbing Only</option>
+                <option value="hill_climbing">Logic + Hill Climbing</option>
+                <option value="average">Logic + Simple Average</option>
+                <option value="random">Logic + Random Guess</option>
+              </select>
+            </div>
+
+            <div class="sub-slider-item">
+              <span>Climbs:</span>
+              <input type="range" class="modern-slider" id="climbs-slider" min="10" max="500" step="10" value="100" style="width: 70px;">
+              <span class="pill-chip num-tabular" id="climbs-val">100</span>
+            </div>
+
+            <div class="sub-slider-item">
+              <span>Sideways:</span>
+              <input type="range" class="modern-slider" id="sideways-slider" min="0" max="50" value="20" style="width: 60px;">
+              <span class="pill-chip num-tabular" id="sideways-val">20</span>
+            </div>
+
+            <label class="toggle-switch-label">
+              <input type="checkbox" class="toggle-switch-input" id="toggle-heatmap" checked>
+              <span class="toggle-switch-track"></span>
+              <span>Heatmap</span>
+            </label>
+
+            <label class="toggle-switch-label">
+              <input type="checkbox" class="toggle-switch-input" id="toggle-overlay" checked>
+              <span class="toggle-switch-track"></span>
+              <span>Overlay</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Board Container -->
+        <div class="board-container" id="board-container">
+          <div class="board-wrapper" id="board-wrapper">
+            <div class="board-grid" id="board-grid" role="grid"></div>
+            <canvas id="overlay-canvas"></canvas>
+          </div>
+        </div>
+      </main>
+
+      <!-- Current Step Card -->
+      <aside class="bento-card" id="step-card">
+        <div class="card-header-row">
+          <span class="card-title">Current step</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="pill-chip amber" id="card-fast-badge" style="display:none;">Fast-forwarding</span>
+            <span class="pill-chip mint" id="card-move-type">Ready</span>
+          </div>
+        </div>
+
+        <div class="step-metrics-card-body">
+          <div class="step-grid-2x2">
+            <div class="step-subcard">
+              <span class="sub-label">Climb progress</span>
+              <span class="sub-val" id="card-climb-info">Climb 0 / 0</span>
+            </div>
+            <div class="step-subcard">
+              <span class="sub-label">Step number</span>
+              <span class="sub-val" id="card-step-num">0</span>
+            </div>
+            <div class="step-subcard">
+              <span class="sub-label">Flipped cell</span>
+              <span class="sub-val" id="card-flipped-cell">None</span>
+            </div>
+            <div class="step-subcard">
+              <span class="sub-label">Value transition</span>
+              <span class="sub-val" id="card-flip-val">-</span>
+            </div>
+          </div>
+
+          <div class="step-subcard">
+            <span class="sub-label">Score change (violations)</span>
+            <span class="sub-val" id="card-score-change">-</span>
+          </div>
+
+          <div class="step-grid-2x2">
+            <div class="step-subcard">
+              <span class="sub-label">Unique solutions</span>
+              <span class="sub-val" id="cnt-unique">0</span>
+            </div>
+            <div class="step-subcard">
+              <span class="sub-label">Stuck plateaus</span>
+              <span class="sub-val" id="cnt-stuck">0</span>
+            </div>
+          </div>
+
+          <!-- Explainer Summary -->
+          <div class="step-live-info" id="explainer-box">
+            Press Start to watch the first automated climb.
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ROW 4: CHARTS TRIPLET (SCORE TRAJECTORY, LANDSCAPE, NEIGHBORHOOD) -->
+    <section class="charts-triplet-row" aria-label="Search Landscape Telemetry">
+      <!-- Score Trajectory -->
+      <div class="bento-card">
+        <div class="card-header-row">
+          <span class="card-title">Score trajectory</span>
+          <span class="pill-chip mint">Current climb</span>
+        </div>
+        <canvas class="bento-canvas" id="climb-canvas" width="440" height="120"></canvas>
+      </div>
+
+      <!-- Landscape View -->
+      <div class="bento-card">
+        <div class="card-header-row">
+          <span class="card-title">Landscape view</span>
+          <span class="pill-chip">Climb vs score</span>
+        </div>
+        <canvas class="bento-canvas" id="landscape-canvas" width="440" height="120"></canvas>
+      </div>
+
+      <!-- Neighborhood View -->
+      <div class="bento-card">
+        <div class="card-header-row">
+          <span class="card-title">Neighborhood flips</span>
+          <span class="pill-chip forest">Steepest ascent</span>
+        </div>
+        <canvas class="bento-canvas" id="neighborhood-canvas" width="440" height="120"></canvas>
+      </div>
+    </section>
+
+    <!-- ROW 5: MOVE LOG, SOLUTIONS TABLE, HERO DECISION CARD -->
+    <section class="bottom-triplet-row">
+      <!-- Move Log -->
+      <div class="bento-card">
+        <div class="card-header-row">
+          <span class="card-title">Move log</span>
+          <span class="pill-chip">Last 10 events</span>
+        </div>
+        <div class="log-container" id="move-log">
+          <div class="log-item">
+            <span class="log-item-dot move"></span>
+            <span>Engine ready. Press Start to play.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Solutions Table -->
+      <div class="bento-card">
+        <div class="card-header-row">
+          <span class="card-title">Solutions table</span>
+          <span class="pill-chip mint" id="solutions-count-badge">0 unique</span>
+        </div>
+        <div class="solutions-container">
+          <table class="solutions-table">
+            <thead>
+              <tr>
+                <th style="width: 28px;">#</th>
+                <th>Mine locations</th>
+                <th style="width: 60px;">Reached</th>
+                <th style="width: 55px;">Share</th>
+              </tr>
+            </thead>
+            <tbody id="solutions-tbody">
+              <tr><td colspan="4" style="text-align:center; color:var(--ink-muted); padding:16px;">Awaiting search results...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Hero Decision Card -->
+      <div class="bento-card decision-hero-card">
+        <div>
+          <div class="card-header-row">
+            <span class="card-title">Solver decision</span>
+            <span class="pill-chip mint" style="background:rgba(255,255,255,0.2); border-color:transparent; color:#FFFFFF;">Next move</span>
+          </div>
+          <div class="decision-headline" id="decision-callout">
+            Awaiting first move
+          </div>
+          <div class="decision-subline">
+            The hill-climbing search samples candidate layouts and minimizes constraint violations.
+          </div>
+        </div>
+        <!-- Status banner for victory / game over -->
+        <div id="status-banner" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- ROW 6: BENCHMARK SUITE -->
+    <section class="bento-card benchmark-card">
+      <div class="card-header-row">
+        <span class="card-title">Algorithm benchmark</span>
+        <div class="pill-btn-group">
+          <button class="pill-btn pill-btn-secondary" id="btn-run-100">Run 100 games</button>
+          <button class="pill-btn pill-btn-primary" id="btn-compare-all">Compare all three</button>
+        </div>
+      </div>
+
+      <div id="bench-results" style="display: none;">
+        <table class="bench-table">
+          <thead>
+            <tr>
+              <th>Algorithm</th>
+              <th>Win rate</th>
+              <th>Avg guesses</th>
+              <th>Sol/Session</th>
+            </tr>
+          </thead>
+          <tbody id="bench-tbody"></tbody>
+        </table>
+        <canvas id="bench-chart" width="800" height="90"></canvas>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Unobtrusive Hidden elements kept for compatibility -->
+  <div style="display:none;" id="lab-panel"><div id="lab-toggle-btn"></div><span id="cnt-solutions">0</span><span id="cnt-avgsteps">0.0</span></div>
+
+  <script>
+    /* ==========================================================================
+       SECTION 2: CONFIGURATION & CONTROLLERS
+       ========================================================================== */
+    const CONFIG = {
+      difficulties: {
+        beginner: { rows: 9, cols: 9, mines: 10, cellSize: 38 },
+        intermediate: { rows: 16, cols: 16, mines: 40, cellSize: 30 },
+        expert: { rows: 16, cols: 30, mines: 99, cellSize: 26 }
+      },
+      currentDifficulty: 'beginner',
+      maxTimer: 999,
+
+      climbsPerGuess: 100,
+      sidewaysLimit: 20,
+      maxStepsPerClimb: 150,
+      
+      speed: 10,
+      maxMoveLogEntries: 10,
+      maxTrailCurves: 30,
+      selectedAlgorithm: 'hill_climbing_only'
+    };
+
+    /* ==========================================================================
+       SECTION 3: PURE GAME LOGIC
+       ========================================================================== */
+    function createBoard(rows, cols, mineCount) {
+      const cells = [];
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < cols; c++) {
+          row.push({
+            r,
+            c,
+            isMine: false,
+            isRevealed: false,
+            isFlagged: false,
+            adjacentMines: 0,
+            isExploded: false
+          });
+        }
+        cells.push(row);
+      }
+      return {
+        rows,
+        cols,
+        mineCount,
+        cells,
+        minesPlaced: false,
+        isGameOver: false,
+        isWon: false,
+        revealedCount: 0,
+        flagsCount: 0,
+        firstClick: true
+      };
+    }
+
+    function getNeighbors(board, r, c) {
+      const neighbors = [];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr >= 0 && nr < board.rows && nc >= 0 && nc < board.cols) {
+            neighbors.push(board.cells[nr][nc]);
+          }
+        }
+      }
+      return neighbors;
+    }
+
+    function placeMines(board, safeR, safeC) {
+      const safeCoordinates = new Set();
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = safeR + dr;
+          const nc = safeC + dc;
+          if (nr >= 0 && nr < board.rows && nc >= 0 && nc < board.cols) {
+            safeCoordinates.add(`${nr},${nc}`);
+          }
+        }
+      }
+
+      const candidates = [];
+      for (let r = 0; r < board.rows; r++) {
+        for (let c = 0; c < board.cols; c++) {
+          if (!safeCoordinates.has(`${r},${c}`)) {
+            candidates.push({ r, c });
+          }
+        }
+      }
+
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = candidates[i];
+        candidates[i] = candidates[j];
+        candidates[j] = temp;
+      }
+
+      const totalToPlace = Math.min(board.mineCount, candidates.length);
+      for (let i = 0; i < totalToPlace; i++) {
+        const { r, c } = candidates[i];
+        board.cells[r][c].isMine = true;
+      }
+
+      countAdjacent(board);
+      board.minesPlaced = true;
+    }
+
+    function countAdjacent(board) {
+      for (let r = 0; r < board.rows; r++) {
+        for (let c = 0; c < board.cols; c++) {
+          const cell = board.cells[r][c];
+          if (cell.isMine) {
+            cell.adjacentMines = 0;
+            continue;
+          }
+          let count = 0;
+          const neighbors = getNeighbors(board, r, c);
+          for (let i = 0; i < neighbors.length; i++) {
+            if (neighbors[i].isMine) count++;
+          }
+          cell.adjacentMines = count;
+        }
+      }
+    }
+
+    function floodReveal(board, startR, startC) {
+      const queue = [{ r: startR, c: startC }];
+      const visited = new Uint8Array(board.rows * board.cols);
+      visited[startR * board.cols + startC] = 1;
+
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        const cell = board.cells[curr.r][curr.c];
+
+        if (!cell.isRevealed && !cell.isFlagged) {
+          cell.isRevealed = true;
+          board.revealedCount++;
+        }
+
+        if (cell.adjacentMines === 0 && !cell.isMine) {
+          const neighbors = getNeighbors(board, curr.r, curr.c);
+          for (let i = 0; i < neighbors.length; i++) {
+            const nb = neighbors[i];
+            const idx = nb.r * board.cols + nb.c;
+            if (!visited[idx] && !nb.isRevealed && !nb.isFlagged) {
+              visited[idx] = 1;
+              if (nb.adjacentMines === 0 && !nb.isMine) {
+                queue.push({ r: nb.r, c: nb.c });
+              } else if (!nb.isMine) {
+                nb.isRevealed = true;
+                board.revealedCount++;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function revealCell(board, r, c) {
+      if (board.isGameOver || board.isWon) return { result: 'ignored' };
+      const cell = board.cells[r][c];
+      if (cell.isRevealed || cell.isFlagged) return { result: 'ignored' };
+
+      if (board.firstClick) {
+        board.firstClick = false;
+        placeMines(board, r, c);
+      }
+
+      if (cell.isMine) {
+        cell.isRevealed = true;
+        cell.isExploded = true;
+        board.isGameOver = true;
+        return { result: 'lost', hitCell: cell };
+      }
+
+      if (cell.adjacentMines === 0) {
+        floodReveal(board, r, c);
+      } else {
+        cell.isRevealed = true;
+        board.revealedCount++;
+      }
+
+      if (checkWin(board)) {
+        board.isWon = true;
+        return { result: 'won' };
+      }
+
+      return { result: 'revealed' };
+    }
+
+    function toggleFlag(board, r, c) {
+      if (board.isGameOver || board.isWon) return false;
+      const cell = board.cells[r][c];
+      if (cell.isRevealed) return false;
+
+      cell.isFlagged = !cell.isFlagged;
+      board.flagsCount += cell.isFlagged ? 1 : -1;
+      return true;
+    }
+
+    function chord(board, r, c) {
+      if (board.isGameOver || board.isWon) return { result: 'ignored' };
+      const cell = board.cells[r][c];
+      if (!cell.isRevealed || cell.adjacentMines === 0) return { result: 'ignored' };
+
+      const neighbors = getNeighbors(board, r, c);
+      let flagCount = 0;
+      for (let i = 0; i < neighbors.length; i++) {
+        if (neighbors[i].isFlagged) flagCount++;
+      }
+
+      if (flagCount !== cell.adjacentMines) return { result: 'ignored' };
+
+      let hitMine = false;
+      let hitCell = null;
+
+      for (let i = 0; i < neighbors.length; i++) {
+        const nb = neighbors[i];
+        if (!nb.isRevealed && !nb.isFlagged) {
+          if (nb.isMine) {
+            nb.isRevealed = true;
+            nb.isExploded = true;
+            hitMine = true;
+            hitCell = nb;
+          } else {
+            if (nb.adjacentMines === 0) {
+              floodReveal(board, nb.r, nb.c);
+            } else {
+              nb.isRevealed = true;
+              board.revealedCount++;
+            }
+          }
+        }
+      }
+
+      if (hitMine) {
+        board.isGameOver = true;
+        return { result: 'lost', hitCell };
+      }
+
+      if (checkWin(board)) {
+        board.isWon = true;
+        return { result: 'won' };
+      }
+
+      return { result: 'chorded' };
+    }
+
+    function checkWin(board) {
+      const totalCells = board.rows * board.cols;
+      const safeCellsCount = totalCells - board.mineCount;
+      return board.revealedCount === safeCellsCount;
+    }
+
+    /* ==========================================================================
+       SECTION 4: LOGIC SOLVER (For comparison in hybrid/benchmark modes)
+       ========================================================================== */
+    function findCertainMoves(board) {
+      if (board.isGameOver || board.isWon) return { sureReveals: [], sureFlags: [] };
+
+      const sureRevealsMap = new Map();
+      const sureFlagsMap = new Map();
+      const numberedRevealed = [];
+
+      for (let r = 0; r < board.rows; r++) {
+        for (let c = 0; c < board.cols; c++) {
+          const cell = board.cells[r][c];
+          if (cell.isRevealed && cell.adjacentMines > 0) {
+            const neighbors = getNeighbors(board, r, c);
+            const flagged = [];
+            const unknowns = [];
+
+            for (let i = 0; i < neighbors.length; i++) {
+              const nb = neighbors[i];
+              if (nb.isFlagged) flagged.push(nb);
+              else if (!nb.isRevealed) unknowns.push(nb);
+            }
+
+            if (unknowns.length > 0) {
+              numberedRevealed.push({
+                cell,
+                flagged,
+                unknowns,
+                unknownSet: new Set(unknowns.map(u => `${u.r},${u.c}`)),
+                remainingMines: cell.adjacentMines - flagged.length
+              });
+            }
+          }
+        }
+      }
+
+      for (let i = 0; i < numberedRevealed.length; i++) {
+        const item = numberedRevealed[i];
+        const rem = item.remainingMines;
+        const uCount = item.unknowns.length;
+
+        if (rem === 0) {
+          for (let j = 0; j < item.unknowns.length; j++) {
+            const u = item.unknowns[j];
+            const key = `${u.r},${u.c}`;
+            if (!sureRevealsMap.has(key)) {
+              sureRevealsMap.set(key, { r: u.r, c: u.c, reason: `Cell (${u.r},${u.c}) is safe (${item.cell.adjacentMines} satisfied)` });
+            }
+          }
+        } else if (rem === uCount) {
+          for (let j = 0; j < item.unknowns.length; j++) {
+            const u = item.unknowns[j];
+            const key = `${u.r},${u.c}`;
+            if (!sureFlagsMap.has(key)) {
+              sureFlagsMap.set(key, { r: u.r, c: u.c, reason: `Cell (${u.r},${u.c}) is a mine (needs all ${uCount} unknowns)` });
+            }
+          }
+        }
+      }
+
+      return {
+        sureReveals: Array.from(sureRevealsMap.values()),
+        sureFlags: Array.from(sureFlagsMap.values())
+      };
+    }
+
+    /* ==========================================================================
+       SECTION 5: FRONTIER & CONSTRAINTS
+       ========================================================================== */
+    function extractFrontierAndConstraints(board) {
+      const frontierMap = new Map();
+      const constraintsList = [];
+
+      for (let r = 0; r < board.rows; r++) {
+        for (let c = 0; c < board.cols; c++) {
+          const cell = board.cells[r][c];
+          if (cell.isRevealed && cell.adjacentMines > 0) {
+            const neighbors = getNeighbors(board, r, c);
+            const flaggedCount = neighbors.reduce((acc, nb) => acc + (nb.isFlagged ? 1 : 0), 0);
+            const unknowns = neighbors.filter(nb => !nb.isRevealed && !nb.isFlagged);
+
+            if (unknowns.length > 0) {
+              const constraintIdx = constraintsList.length;
+              constraintsList.push({
+                r,
+                c,
+                targetMines: Math.max(0, cell.adjacentMines - flaggedCount),
+                totalAdjacentMines: cell.adjacentMines,
+                flaggedCount,
+                cell,
+                frontierIndices: []
+              });
+
+              for (let i = 0; i < unknowns.length; i++) {
+                const u = unknowns[i];
+                const key = `${u.r},${u.c}`;
+                if (!frontierMap.has(key)) {
+                  frontierMap.set(key, {
+                    index: frontierMap.size,
+                    r: u.r,
+                    c: u.c,
+                    cell: u,
+                    constraintIndices: []
+                  });
+                }
+                const fItem = frontierMap.get(key);
+                fItem.constraintIndices.push(constraintIdx);
+                constraintsList[constraintIdx].frontierIndices.push(fItem.index);
+              }
+            }
+          }
+        }
+      }
+
+      const frontierList = Array.from(frontierMap.values());
+      return { frontierList, constraintsList };
+    }
+
+    /* ==========================================================================
+       SECTION 6: BOT ENGINE & AUTO PLAYBACK
+       ========================================================================== */
+    const bot = {
+      status: 'READY',
+      runId: 0,
+      resumeCallbacks: [],
+      activeSleepCancel: null,
+      liveState: {
+        currentLayout: null,
+        flippedCell: null,
+        frontierList: [],
+        constraintsList: [],
+        probabilityMap: null
+      }
+    };
+
+    function updateBotStatus(status) {
+      bot.status = status;
+      const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+      dom.botStatus.textContent = formatted;
+      dom.botStatus.className = 'status-pill ' + status.toLowerCase();
+
+      const isRunning = (status === 'RUNNING');
+      dom.btnStart.disabled = isRunning;
+      dom.btnStop.disabled = !isRunning;
+    }
+
+    function sleep(ms) {
+      const myRunId = bot.runId;
+      return new Promise((resolve) => {
+        let timer = null;
+        let startTime = Date.now();
+        let remaining = ms;
+
+        const onResume = () => {
+          if (bot.runId !== myRunId) return;
+          startTime = Date.now();
+          timer = setTimeout(() => {
+            bot.activeSleepCancel = null;
+            resolve();
+          }, remaining);
+          bot.activeSleepCancel = () => {
+            if (timer) clearTimeout(timer);
+            remaining = Math.max(0, remaining - (Date.now() - startTime));
+            bot.resumeCallbacks.push(onResume);
+          };
+        };
+
+        if (bot.status === 'RUNNING') {
+          timer = setTimeout(() => {
+            bot.activeSleepCancel = null;
+            resolve();
+          }, remaining);
+          bot.activeSleepCancel = () => {
+            if (timer) clearTimeout(timer);
+            remaining = Math.max(0, remaining - (Date.now() - startTime));
+            bot.resumeCallbacks.push(onResume);
+          };
+        } else if (bot.status === 'STOPPED') {
+          bot.resumeCallbacks.push(onResume);
+        } else {
+          resolve();
+        }
+      });
+    }
+
+    function startBot() {
+      if (currentBoard.isGameOver || currentBoard.isWon) return;
+
+      if (bot.status === 'STOPPED') {
+        updateBotStatus('RUNNING');
+        const cbs = bot.resumeCallbacks.slice();
+        bot.resumeCallbacks = [];
+        cbs.forEach(cb => cb());
+        return;
+      }
+
+      bot.runId++;
+      updateBotStatus('RUNNING');
+      runAutonomousLoop(bot.runId);
+    }
+
+    function stopBot() {
+      if (bot.status !== 'RUNNING') return;
+      updateBotStatus('STOPPED');
+      if (bot.activeSleepCancel) {
+        const cancel = bot.activeSleepCancel;
+        bot.activeSleepCancel = null;
+        cancel();
+      }
+    }
+
+    async function runAutonomousLoop(myRunId) {
+      while (bot.status === 'RUNNING' && myRunId === bot.runId) {
+        if (!currentBoard || currentBoard.isGameOver || currentBoard.isWon) {
+          updateBotStatus(currentBoard && currentBoard.isWon ? 'WON' : 'LOST');
+          break;
+        }
+
+        // First click
+        if (currentBoard.firstClick) {
+          startTimer();
+          const centerR = Math.floor(currentBoard.rows / 2);
+          const centerC = Math.floor(currentBoard.cols / 2);
+
+          bot.liveState.flippedCell = { r: centerR, c: centerC };
+          renderBoard();
+          addMoveLog(`First move: opening center cell (${centerR}, ${centerC})`, 'move');
+          updateDecisionCallout(`Opening center (${centerR}, ${centerC})`, `Establishing initial constraint frontier.`);
+
+          await sleep(Math.max(100, 1000 / CONFIG.speed));
+          if (myRunId !== bot.runId) return;
+
+          revealCell(currentBoard, centerR, centerC);
+          bot.liveState.flippedCell = null;
+          renderBoard();
+
+          await sleep(Math.max(150, 1000 / CONFIG.speed));
+          if (myRunId !== bot.runId) return;
+          continue;
+        }
+
+        // Hybrid logic
+        if (CONFIG.selectedAlgorithm !== 'hill_climbing_only') {
+          const { sureReveals, sureFlags } = findCertainMoves(currentBoard);
+          if (sureReveals.length > 0) {
+            const move = sureReveals[0];
+            bot.liveState.flippedCell = { r: move.r, c: move.c };
+            renderBoard();
+            revealCell(currentBoard, move.r, move.c);
+            addMoveLog(move.reason, 'solution');
+            updateDecisionCallout(`Reveal (${move.r}, ${move.c})`, move.reason);
+            await sleep(Math.max(150, 1000 / CONFIG.speed));
+            if (myRunId !== bot.runId) return;
+            bot.liveState.flippedCell = null;
+            renderBoard();
+            continue;
+          }
+          if (sureFlags.length > 0) {
+            const move = sureFlags[0];
+            bot.liveState.flippedCell = { r: move.r, c: move.c };
+            renderBoard();
+            toggleFlag(currentBoard, move.r, move.c);
+            addMoveLog(move.reason, 'solution');
+            updateDecisionCallout(`Flag (${move.r}, ${move.c})`, move.reason);
+            await sleep(Math.max(150, 1000 / CONFIG.speed));
+            if (myRunId !== bot.runId) return;
+            bot.liveState.flippedCell = null;
+            renderBoard();
+            continue;
+          }
+        }
+
+        // Hill-climbing session
+        const progressed = await executeAnimatedHillClimbingSession(myRunId);
+        if (!progressed || myRunId !== bot.runId) return;
+      }
+    }
+
+    async function executeAnimatedHillClimbingSession(myRunId) {
+      const { frontierList, constraintsList } = extractFrontierAndConstraints(currentBoard);
+      bot.liveState.frontierList = frontierList;
+      bot.liveState.constraintsList = constraintsList;
+
+      if (frontierList.length === 0) {
+        updateExplainerBox(0, 0, 0, 0, 0, 0, '0%');
+        updateSolutionsTable([]);
+        drawScoreTrajectory([], null, -1);
+        drawLandscapeScatter([]);
+        drawNeighborhoodBarChart(null);
+
+        const unrevealed = [];
+        for (let r = 0; r < currentBoard.rows; r++) {
+          for (let c = 0; c < currentBoard.cols; c++) {
+            const cell = currentBoard.cells[r][c];
+            if (!cell.isRevealed && !cell.isFlagged) unrevealed.push({ r, c });
+          }
+        }
+        if (unrevealed.length === 0) return false;
+        const pick = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+        revealCell(currentBoard, pick.r, pick.c);
+        addMoveLog(`Fallback reveal at (${pick.r}, ${pick.c})`, 'sideways');
+        renderBoard();
+        return true;
+      }
+
+      const K = frontierList.length;
+      const C_count = constraintsList.length;
+      const remainingGlobalMines = Math.max(0, currentBoard.mineCount - currentBoard.flagsCount);
+      const globalDensity = remainingGlobalMines / Math.max(1, (currentBoard.rows * currentBoard.cols - currentBoard.revealedCount - currentBoard.flagsCount));
+
+      const totalClimbs = CONFIG.climbsPerGuess;
+      const sidewaysLimit = CONFIG.sidewaysLimit;
+      const maxSteps = CONFIG.maxStepsPerClimb;
+
+      updateDecisionCallout(`Building frontier`, `${K} cells and ${C_count} active constraints`);
+      addMoveLog(`Building frontier: ${K} cells, ${C_count} constraints`, 'move');
+
+      const state = new Uint8Array(K);
+      const assignedMines = new Int32Array(C_count);
+      const targetMines = new Int32Array(C_count);
+      for (let i = 0; i < C_count; i++) targetMines[i] = constraintsList[i].targetMines;
+
+      const frontierConstraints = frontierList.map(f => new Int32Array(f.constraintIndices));
+      const constraintFrontier = constraintsList.map(c => new Int32Array(c.frontierIndices));
+
+      const uniqueSolutionsMap = new Map();
+      const mineCountsPerCell = new Int32Array(K);
+      let solutionsCount = 0;
+      let stuckCount = 0;
+      let totalStepsOnSuccess = 0;
+      const finishedClimbs = [];
+
+      drawLandscapeScatter([]);
+
+      for (let climbIdx = 0; climbIdx < totalClimbs; climbIdx++) {
+        if (myRunId !== bot.runId) return false;
+
+        const isFastForward = (climbIdx >= 5);
+        dom.cardFastBadge.style.display = isFastForward ? 'inline-flex' : 'none';
+
+        const stepDelay = isFastForward
+          ? Math.max(2, Math.floor((1000 / CONFIG.speed) / 10))
+          : Math.floor(1000 / CONFIG.speed);
+
+        let currentMines = 0;
+        for (let i = 0; i < K; i++) {
+          state[i] = Math.random() < globalDensity ? 1 : 0;
+          currentMines += state[i];
+        }
+
+        assignedMines.fill(0);
+        for (let c = 0; c < C_count; c++) {
+          const fIndices = constraintFrontier[c];
+          let sum = 0;
+          for (let i = 0; i < fIndices.length; i++) sum += state[fIndices[i]];
+          assignedMines[c] = sum;
+        }
+
+        let violationScore = 0;
+        for (let c = 0; c < C_count; c++) violationScore += Math.abs(assignedMines[c] - targetMines[c]);
+        let excessPenalty = Math.max(0, currentMines - remainingGlobalMines);
+        let totalScore = violationScore + excessPenalty;
+
+        const trajectory = [totalScore];
+        let sidewaysCount = 0;
+        let step = 0;
+        let finalStatus = 'step_limit';
+
+        bot.liveState.currentLayout = new Uint8Array(state);
+        bot.liveState.flippedCell = null;
+
+        updateStepCard(climbIdx + 1, totalClimbs, 0, null, '-', `${totalScore}`, 'init');
+        drawScoreTrajectory(finishedClimbs, trajectory, trajectory.length - 1);
+        renderBoard();
+
+        while (step < maxSteps) {
+          if (myRunId !== bot.runId) return false;
+
+          if (totalScore === 0) {
+            finalStatus = 'solved';
+            break;
+          }
+
+          let bestDelta = Infinity;
+          let bestCandidates = [];
+          const neighborhoodScores = new Array(K);
+
+          for (let i = 0; i < K; i++) {
+            const delta = state[i] === 0 ? 1 : -1;
+            const touching = frontierConstraints[i];
+
+            let deltaScore = 0;
+            for (let j = 0; j < touching.length; j++) {
+              const c = touching[j];
+              const oldDiff = Math.abs(assignedMines[c] - targetMines[c]);
+              const newDiff = Math.abs((assignedMines[c] + delta) - targetMines[c]);
+              deltaScore += (newDiff - oldDiff);
+            }
+
+            const newCurrentMines = currentMines + delta;
+            const newExcess = Math.max(0, newCurrentMines - remainingGlobalMines);
+            const deltaExcess = newExcess - excessPenalty;
+            const candidateDelta = deltaScore + deltaExcess;
+            const candidateScore = totalScore + candidateDelta;
+            neighborhoodScores[i] = candidateScore;
+
+            if (candidateDelta < bestDelta) {
+              bestDelta = candidateDelta;
+              bestCandidates = [i];
+            } else if (candidateDelta === bestDelta) {
+              bestCandidates.push(i);
+            }
+          }
+
+          if (bestDelta < 0 || (bestDelta === 0 && sidewaysCount < sidewaysLimit)) {
+            const isImprove = (bestDelta < 0);
+            if (isImprove) sidewaysCount = 0;
+            else sidewaysCount++;
+
+            const flipIdx = bestCandidates[Math.floor(Math.random() * bestCandidates.length)];
+            const chosenCell = frontierList[flipIdx];
+            const oldVal = state[flipIdx];
+            const scoreBefore = totalScore;
+            const delta = oldVal === 0 ? 1 : -1;
+
+            drawNeighborhoodBarChart({
+              neighborhoodScores,
+              scoreBefore,
+              bestCandidateIndex: flipIdx
+            });
+
+            state[flipIdx] ^= 1;
+            currentMines += delta;
+            excessPenalty = Math.max(0, currentMines - remainingGlobalMines);
+
+            const touching = frontierConstraints[flipIdx];
+            for (let j = 0; j < touching.length; j++) assignedMines[touching[j]] += delta;
+
+            totalScore += bestDelta;
+            step++;
+            trajectory.push(totalScore);
+
+            const moveType = (totalScore === 0) ? 'solved' : (isImprove ? 'improve' : 'sideways');
+
+            bot.liveState.currentLayout = new Uint8Array(state);
+            bot.liveState.flippedCell = { r: chosenCell.r, c: chosenCell.c };
+
+            updateStepCard(
+              climbIdx + 1,
+              totalClimbs,
+              step,
+              chosenCell,
+              `${oldVal} → ${state[flipIdx]}`,
+              `${scoreBefore} → ${totalScore}`,
+              moveType
+            );
+
+            renderBoard();
+            drawScoreTrajectory(finishedClimbs, trajectory, trajectory.length - 1);
+
+            await sleep(stepDelay);
+            if (myRunId !== bot.runId) return false;
+          } else {
+            finalStatus = 'stuck';
+            break;
+          }
+        }
+
+        if (totalScore === 0) {
+          finalStatus = 'solved';
+          solutionsCount++;
+          totalStepsOnSuccess += step;
+
+          const key = state.join('');
+          if (!uniqueSolutionsMap.has(key)) {
+            uniqueSolutionsMap.set(key, { layout: new Uint8Array(state), count: 1 });
+          } else {
+            uniqueSolutionsMap.get(key).count++;
+          }
+
+          for (let i = 0; i < K; i++) {
+            if (state[i] === 1) mineCountsPerCell[i]++;
+          }
+        } else if (finalStatus === 'stuck') {
+          stuckCount++;
+        }
+
+        finishedClimbs.push({
+          climbIndex: climbIdx,
+          trajectory,
+          finalScore: totalScore,
+          finalStatus
+        });
+
+        drawLandscapeScatter(finishedClimbs);
+
+        const currentRate = ((solutionsCount / (climbIdx + 1)) * 100).toFixed(1);
+        const currentAvg = solutionsCount > 0 ? (totalStepsOnSuccess / solutionsCount).toFixed(1) : '0.0';
+        updateLiveCounters(climbIdx + 1, solutionsCount, uniqueSolutionsMap.size, stuckCount, `${currentRate}%`, currentAvg);
+
+        addMoveLog(`Climb #${climbIdx + 1}: ${finalStatus} (score: ${totalScore})`, finalStatus === 'solved' ? 'solution' : (finalStatus === 'stuck' ? 'stuck' : 'sideways'));
+
+        const pauseBetween = isFastForward ? Math.max(5, Math.floor((1000 / CONFIG.speed) / 10)) : Math.max(50, Math.floor(500 / CONFIG.speed));
+        await sleep(pauseBetween);
+        if (myRunId !== bot.runId) return false;
+      }
+
+      dom.cardFastBadge.style.display = 'none';
+
+      const uniqueSolutions = Array.from(uniqueSolutionsMap.entries()).map(([key, val]) => {
+        const mineIndices = [];
+        for (let i = 0; i < K; i++) {
+          if (val.layout[i] === 1) mineIndices.push(i);
+        }
+        return {
+          layout: val.layout,
+          count: val.count,
+          share: ((val.count / Math.max(1, solutionsCount)) * 100).toFixed(1),
+          mineCells: mineIndices.map(idx => frontierList[idx])
+        };
+      }).sort((a, b) => b.count - a.count);
+
+      updateSolutionsTable(uniqueSolutions);
+
+      const probabilityMap = new Map();
+      let safeCells = [];
+      let certainMines = [];
+      let lowestProbCell = null;
+      let minProb = Infinity;
+
+      if (solutionsCount > 0) {
+        for (let i = 0; i < K; i++) {
+          const f = frontierList[i];
+          const prob = mineCountsPerCell[i] / solutionsCount;
+          const key = `${f.r},${f.c}`;
+          probabilityMap.set(key, { prob, solutionsCount, isFrontier: true });
+
+          const cellObj = { r: f.r, c: f.c, prob, solutionsCount };
+          if (prob === 0) safeCells.push(cellObj);
+          if (prob === 1) certainMines.push(cellObj);
+          if (prob < minProb) { minProb = prob; lowestProbCell = cellObj; }
+        }
+      } else {
+        for (let i = 0; i < K; i++) {
+          const f = frontierList[i];
+          let sumP = 0;
+          for (let j = 0; j < f.constraintIndices.length; j++) {
+            const c = constraintsList[f.constraintIndices[j]];
+            sumP += Math.max(0, c.targetMines) / Math.max(1, c.frontierIndices.length);
+          }
+          const avgP = Math.min(1, sumP / Math.max(1, f.constraintIndices.length));
+          probabilityMap.set(`${f.r},${f.c}`, { prob: avgP, solutionsCount: 0, isFrontier: true });
+          const cellObj = { r: f.r, c: f.c, prob: avgP, solutionsCount: 0 };
+          if (avgP < minProb) { minProb = avgP; lowestProbCell = cellObj; }
+        }
+      }
+
+      bot.liveState.probabilityMap = probabilityMap;
+
+      let decision = null;
+      if (safeCells.length > 0) {
+        decision = {
+          type: 'reveal',
+          cell: safeCells[0],
+          headline: `Reveal (${safeCells[0].r}, ${safeCells[0].c})`,
+          subline: `0% mine probability across ${solutionsCount} solutions`
+        };
+      } else if (certainMines.length > 0) {
+        decision = {
+          type: 'flag',
+          cell: certainMines[0],
+          headline: `Flag (${certainMines[0].r}, ${certainMines[0].c})`,
+          subline: `100% mine probability across ${solutionsCount} solutions`
+        };
+      } else if (lowestProbCell) {
+        decision = {
+          type: 'reveal',
+          cell: lowestProbCell,
+          headline: `Guess (${lowestProbCell.r}, ${lowestProbCell.c})`,
+          subline: `Lowest mine probability: ${(lowestProbCell.prob * 100).toFixed(1)}% (${solutionsCount} solutions)`
+        };
+      }
+
+      if (!decision) return false;
+
+      updateDecisionCallout(decision.headline, `${decision.subline} • All ${totalClimbs} climbs completed. Stopped for review. Press Start to execute move.`);
+      addMoveLog(`${decision.headline}: ${decision.subline}`, decision.type === 'flag' || decision.headline.includes('Reveal') ? 'solution' : 'move');
+
+      updateExplainerBox(K, C_count, totalClimbs, solutionsCount, uniqueSolutions.length, stuckCount, ((solutionsCount / totalClimbs) * 100).toFixed(1));
+
+      bot.liveState.currentLayout = null;
+      bot.liveState.flippedCell = { r: decision.cell.r, c: decision.cell.c };
+      renderBoard();
+
+      // Automatically stop when climb progress reaches 100 (or totalClimbs setting)
+      // so the user can scroll down and review all charts, landscape view, solutions, and telemetry
+      dom.cardMoveType.textContent = 'Completed';
+      dom.cardMoveType.className = 'pill-chip forest';
+      dom.cardClimbInfo.textContent = `Climb ${totalClimbs} / ${totalClimbs}`;
+      stopBot();
+      addMoveLog(`Reached climb ${totalClimbs}/${totalClimbs}. Stopped for review.`, 'solution');
+
+      // Wait until the user presses Start to resume and execute the move
+      await sleep(100);
+      if (myRunId !== bot.runId) return false;
+
+      if (decision.type === 'reveal') {
+        revealCell(currentBoard, decision.cell.r, decision.cell.c);
+      } else {
+        toggleFlag(currentBoard, decision.cell.r, decision.cell.c);
+      }
+
+      bot.liveState.flippedCell = null;
+      renderBoard();
+
+      await sleep(Math.max(150, Math.floor(1000 / CONFIG.speed)));
+      return true;
+    }
+
+    /* ==========================================================================
+       SECTION 7: DOM REFERENCES & UI HELPERS
+       ========================================================================== */
+    let currentBoard = null;
+    let timerInterval = null;
+    let secondsElapsed = 0;
+    let timerRunning = false;
+
+    const dom = {
+      boardGrid: document.getElementById('board-grid'),
+      overlayCanvas: document.getElementById('overlay-canvas'),
+      minesCounter: document.getElementById('mines-counter'),
+      timerCounter: document.getElementById('timer-counter'),
+      faceBtn: document.getElementById('face-btn'),
+      statusBanner: document.getElementById('status-banner'),
+      botStatus: document.getElementById('bot-status'),
+      decisionCallout: document.getElementById('decision-callout'),
+      gaugeArc: document.getElementById('gauge-arc'),
+
+      btnStart: document.getElementById('btn-bot-start'),
+      btnStop: document.getElementById('btn-bot-stop'),
+      btnReset: document.getElementById('btn-bot-reset'),
+      btnRun100: document.getElementById('btn-run-100'),
+      btnCompareAll: document.getElementById('btn-compare-all'),
+
+      algoSelect: document.getElementById('algo-select'),
+      speedSlider: document.getElementById('speed-slider'),
+      speedVal: document.getElementById('speed-val'),
+      climbsSlider: document.getElementById('climbs-slider'),
+      climbsVal: document.getElementById('climbs-val'),
+      sidewaysSlider: document.getElementById('sideways-slider'),
+      sidewaysVal: document.getElementById('sideways-val'),
+
+      toggleHeatmap: document.getElementById('toggle-heatmap'),
+      toggleOverlay: document.getElementById('toggle-overlay'),
+
+      cardClimbInfo: document.getElementById('card-climb-info'),
+      cardFastBadge: document.getElementById('card-fast-badge'),
+      cardMoveType: document.getElementById('card-move-type'),
+      cardStepNum: document.getElementById('card-step-num'),
+      cardFlippedCell: document.getElementById('card-flipped-cell'),
+      cardFlipVal: document.getElementById('card-flip-val'),
+      cardScoreChange: document.getElementById('card-score-change'),
+
+      climbCanvas: document.getElementById('climb-canvas'),
+      landscapeCanvas: document.getElementById('landscape-canvas'),
+      neighborhoodCanvas: document.getElementById('neighborhood-canvas'),
+
+      solutionsTbody: document.getElementById('solutions-tbody'),
+      solutionsCountBadge: document.getElementById('solutions-count-badge'),
+
+      cntClimbs: document.getElementById('cnt-climbs'),
+      cntRate: document.getElementById('cnt-rate'),
+      cntUnique: document.getElementById('cnt-unique'),
+      cntStuck: document.getElementById('cnt-stuck'),
+      explainerBox: document.getElementById('explainer-box'),
+      moveLog: document.getElementById('move-log'),
+
+      benchResults: document.getElementById('bench-results'),
+      benchTbody: document.getElementById('bench-tbody'),
+      benchChart: document.getElementById('bench-chart'),
+
+      diffButtons: {
+        beginner: document.getElementById('btn-beginner'),
+        intermediate: document.getElementById('btn-intermediate'),
+        expert: document.getElementById('btn-expert')
+      }
+    };
+
+    function updateDecisionCallout(headline, subline) {
+      dom.decisionCallout.textContent = headline;
+      const subEl = dom.decisionCallout.nextElementSibling;
+      if (subEl) subEl.textContent = subline;
+    }
+
+    function addMoveLog(text, type = 'move') {
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      const dot = document.createElement('span');
+      dot.className = `log-item-dot ${type}`;
+      const textSpan = document.createElement('span');
+      textSpan.textContent = text;
+      item.appendChild(dot);
+      item.appendChild(textSpan);
+      dom.moveLog.prepend(item);
+
+      while (dom.moveLog.children.length > CONFIG.maxMoveLogEntries) {
+        dom.moveLog.removeChild(dom.moveLog.lastChild);
+      }
+    }
+
+    function updateStepCard(climbNum, totalClimbs, stepNum, cell, flipVal, scoreStr, moveType) {
+      dom.cardClimbInfo.textContent = `Climb ${climbNum} / ${totalClimbs}`;
+      const formattedType = moveType.charAt(0).toUpperCase() + moveType.slice(1);
+      dom.cardMoveType.textContent = formattedType;
+      
+      let chipClass = 'pill-chip mint';
+      if (moveType === 'stuck') chipClass = 'pill-chip coral';
+      else if (moveType === 'sideways') chipClass = 'pill-chip amber';
+      else if (moveType === 'solved') chipClass = 'pill-chip forest';
+      dom.cardMoveType.className = chipClass;
+
+      dom.cardStepNum.textContent = `${stepNum}`;
+      dom.cardFlippedCell.textContent = cell ? `(${cell.r}, ${cell.c})` : 'None';
+      dom.cardFlipVal.textContent = flipVal;
+      dom.cardScoreChange.textContent = scoreStr;
+    }
+
+    function updateLiveCounters(climbs, sol, unique, stuck, rate, avg) {
+      dom.cntClimbs.textContent = climbs;
+      dom.cntUnique.textContent = unique;
+      dom.cntStuck.textContent = stuck;
+      dom.cntRate.textContent = rate;
+
+      // Update SVG gauge arc
+      const pct = parseFloat(rate) || 0;
+      const totalLength = 75.4;
+      const offset = totalLength - (pct / 100) * totalLength;
+      if (dom.gaugeArc) dom.gaugeArc.style.strokeDashoffset = offset;
+    }
+
+    function updateExplainerBox(frontierK, constraintsC, climbs, solutions, unique, stuck, rate) {
+      if (frontierK === 0) {
+        dom.explainerBox.textContent = `Press Start to watch the first automated climb.`;
+        return;
+      }
+      dom.explainerBox.textContent = `Active frontier: ${frontierK} cells, ${constraintsC} constraints. Executed ${climbs} restarts (${unique} unique solutions, ${rate} success).`;
+    }
+
+    function updateSolutionsTable(solutions) {
+      if (!solutions || solutions.length === 0) {
+        dom.solutionsTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--ink-muted); padding:16px;">Awaiting search results...</td></tr>`;
+        dom.solutionsCountBadge.textContent = '0 unique';
+        return;
+      }
+
+      dom.solutionsCountBadge.textContent = `${solutions.length} unique`;
+      dom.solutionsTbody.innerHTML = solutions.slice(0, 8).map((sol, idx) => {
+        const mineCoords = sol.mineCells.map(c => `(${c.r},${c.c})`).join(' ') || 'None';
+        return `
+          <tr>
+            <td style="color:var(--forest); font-weight:700;">#${idx + 1}</td>
+            <td title="${mineCoords}">${mineCoords}</td>
+            <td style="font-weight:600;">${sol.count}</td>
+            <td>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div style="flex:1; height:4px; background:var(--mint-pale); border-radius:999px; overflow:hidden;">
+                  <div style="width:${sol.share}%; height:100%; background:var(--mint); border-radius:999px;"></div>
+                </div>
+                <span style="font-size:11px; color:var(--ink-muted);">${sol.share}%</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function formatNumber(num, length = 3) {
+      if (num < 0) {
+        const absVal = Math.min(Math.abs(num), 99);
+        return '-' + String(absVal).padStart(length - 1, '0');
+      }
+      return String(Math.min(num, 999)).padStart(length, '0');
+    }
+
+    function startTimer() {
+      if (timerRunning) return;
+      timerRunning = true;
+      secondsElapsed = 0;
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        secondsElapsed++;
+        if (secondsElapsed > CONFIG.maxTimer) {
+          secondsElapsed = CONFIG.maxTimer;
+          clearInterval(timerInterval);
+        }
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    function stopTimer() {
+      timerRunning = false;
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function updateTimerDisplay() {
+      dom.timerCounter.textContent = formatNumber(secondsElapsed);
+    }
+
+    function updateMinesCounter() {
+      if (!currentBoard) return;
+      const remaining = currentBoard.mineCount - currentBoard.flagsCount;
+      dom.minesCounter.textContent = formatNumber(remaining);
+    }
+
+    function getFlagSVG() {
+      return `<svg viewBox="0 0 24 24" width="16" height="16" fill="var(--coral)" stroke="var(--coral)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21v-4m0 0V4a1 1 0 0 1 1.5-.86l10 5a1 1 0 0 1 0 1.72l-10 5A1 1 0 0 1 5 17z"/></svg>`;
+    }
+
+    function getMineSVG() {
+      return `<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="6" fill="var(--ink)"/><circle cx="12" cy="12" r="2.2" fill="var(--coral)"/><line x1="12" y1="2" x2="12" y2="5" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="22" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="12" x2="5" y2="12" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="12" x2="22" y2="12" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="4.9" y1="4.9" x2="7.2" y2="7.2" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="16.8" y1="16.8" x2="19.1" y2="19.1" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="4.9" y1="19.1" x2="7.2" y2="16.8" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><line x1="16.8" y1="7.2" x2="19.1" y2="4.9" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/></svg>`;
+    }
+
+    function renderCell(cell, element) {
+      element.className = 'cell';
+      element.innerHTML = '';
+      element.removeAttribute('data-num');
+
+      const isFlipped = bot.liveState.flippedCell &&
+        bot.liveState.flippedCell.r === cell.r && bot.liveState.flippedCell.c === cell.c;
+
+      if (cell.isRevealed) {
+        element.classList.add('revealed');
+        if (cell.isMine) {
+          element.classList.add('mine');
+          if (cell.isExploded) element.classList.add('mine-exploded');
+          element.innerHTML = getMineSVG();
+        } else if (cell.adjacentMines > 0) {
+          if (bot.liveState.currentLayout && bot.liveState.frontierList.length > 0) {
+            const neighbors = getNeighbors(currentBoard, cell.r, cell.c);
+            let assigned = 0;
+            for (let i = 0; i < neighbors.length; i++) {
+              const nb = neighbors[i];
+              if (nb.isFlagged) {
+                assigned++;
+              } else if (!nb.isRevealed) {
+                const fIdx = bot.liveState.frontierList.findIndex(f => f.r === nb.r && f.c === nb.c);
+                if (fIdx !== -1 && bot.liveState.currentLayout[fIdx] === 1) assigned++;
+              }
+            }
+            const required = cell.adjacentMines;
+            element.textContent = `${assigned}/${required}`;
+            if (assigned === required) element.classList.add('constraint-satisfied');
+            else element.classList.add('constraint-violated');
+          } else {
+            element.setAttribute('data-num', cell.adjacentMines);
+            element.textContent = cell.adjacentMines;
+          }
+        } else {
+          element.classList.add('zero');
+        }
+      } else {
+        element.classList.add('hidden');
+        if (cell.isFlagged) {
+          element.innerHTML = getFlagSVG();
+        }
+
+        if (bot.liveState.currentLayout && !cell.isFlagged) {
+          const fIdx = bot.liveState.frontierList.findIndex(f => f.r === cell.r && f.c === cell.c);
+          if (fIdx !== -1) {
+            if (bot.liveState.currentLayout[fIdx] === 1) {
+              element.classList.add('frontier-simulated-mine');
+              element.innerHTML = getMineSVG();
+            } else {
+              element.classList.add('frontier-simulated-safe');
+              element.textContent = '·';
+            }
+          }
+        }
+
+        if (currentBoard.isGameOver) {
+          if (cell.isMine && !cell.isFlagged) {
+            element.innerHTML = getMineSVG();
+            element.classList.add('mine');
+          } else if (!cell.isMine && cell.isFlagged) {
+            element.classList.add('wrong-flag');
+          }
+        }
+      }
+
+      if (isFlipped) {
+        element.classList.add('cell-just-flipped');
+      }
+    }
+
+    function drawVisualOverlays() {
+      const canvas = dom.overlayCanvas;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (!currentBoard) return;
+
+      const diffConfig = CONFIG.difficulties[CONFIG.currentDifficulty];
+      const viewportWidth = window.innerWidth - 60;
+      const cellSize = Math.max(22, Math.min(diffConfig.cellSize, Math.floor(viewportWidth / currentBoard.cols)));
+      const gap = 3;
+      const padding = 2;
+
+      function getCellRect(r, c) {
+        return {
+          x: padding + c * (cellSize + gap),
+          y: padding + r * (cellSize + gap),
+          w: cellSize,
+          h: cellSize
+        };
+      }
+
+      // Heatmap
+      if (dom.toggleHeatmap.checked && bot.liveState.probabilityMap && !currentBoard.isGameOver && !currentBoard.isWon) {
+        bot.liveState.probabilityMap.forEach((entry, key) => {
+          const [r, c] = key.split(',').map(Number);
+          const cell = currentBoard.cells[r][c];
+          if (!cell.isRevealed && !cell.isFlagged) {
+            const rect = getCellRect(r, c);
+            const p = entry.prob;
+            // mint to coral interpolation
+            ctx.fillStyle = p < 0.25 ? 'rgba(127, 203, 160, 0.42)' : (p < 0.6 ? 'rgba(224, 145, 47, 0.42)' : 'rgba(217, 83, 79, 0.45)');
+            
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2, 6);
+            else ctx.rect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#14221B';
+            ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const pct = Math.round(p * 100);
+            ctx.fillText(`${pct}%`, rect.x + rect.w / 2, rect.y + rect.h / 2);
+          }
+        });
+      }
+
+      // Constraint rings
+      if (dom.toggleOverlay.checked && !currentBoard.isGameOver && !currentBoard.isWon) {
+        const { constraintsList } = extractFrontierAndConstraints(currentBoard);
+        for (let i = 0; i < constraintsList.length; i++) {
+          const c = constraintsList[i];
+          const rect = getCellRect(c.r, c.c);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = c.targetMines === 0 ? 'rgba(31, 107, 71, 0.65)' : 'rgba(224, 145, 47, 0.65)';
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4, 6);
+          else ctx.strokeRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+          ctx.stroke();
+        }
+
+        if (bot.liveState.flippedCell) {
+          const rect = getCellRect(bot.liveState.flippedCell.r, bot.liveState.flippedCell.c);
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = '#7FCBA0';
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2, 7);
+          else ctx.strokeRect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function renderBoard() {
+      if (!currentBoard) return;
+
+      const diffConfig = CONFIG.difficulties[CONFIG.currentDifficulty];
+      const viewportWidth = window.innerWidth - 60;
+      const calculatedSize = Math.max(22, Math.min(diffConfig.cellSize, Math.floor(viewportWidth / currentBoard.cols)));
+      const gap = 3;
+      const padding = 2;
+
+      dom.boardGrid.style.gridTemplateColumns = `repeat(${currentBoard.cols}, ${calculatedSize}px)`;
+      dom.boardGrid.style.gridTemplateRows = `repeat(${currentBoard.rows}, ${calculatedSize}px)`;
+
+      if (dom.boardGrid.children.length !== currentBoard.rows * currentBoard.cols) {
+        dom.boardGrid.innerHTML = '';
+        for (let r = 0; r < currentBoard.rows; r++) {
+          for (let c = 0; c < currentBoard.cols; c++) {
+            const cellEl = document.createElement('div');
+            cellEl.dataset.r = r;
+            cellEl.dataset.c = c;
+            cellEl.style.width = `${calculatedSize}px`;
+            cellEl.style.height = `${calculatedSize}px`;
+            dom.boardGrid.appendChild(cellEl);
+          }
+        }
+      }
+
+      for (let r = 0; r < currentBoard.rows; r++) {
+        for (let c = 0; c < currentBoard.cols; c++) {
+          const index = r * currentBoard.cols + c;
+          const cellEl = dom.boardGrid.children[index];
+          const cell = currentBoard.cells[r][c];
+          renderCell(cell, cellEl);
+        }
+      }
+
+      const totalWidth = padding * 2 + currentBoard.cols * calculatedSize + (currentBoard.cols - 1) * gap;
+      const totalHeight = padding * 2 + currentBoard.rows * calculatedSize + (currentBoard.rows - 1) * gap;
+
+      dom.overlayCanvas.width = totalWidth;
+      dom.overlayCanvas.height = totalHeight;
+      dom.overlayCanvas.style.width = `${totalWidth}px`;
+      dom.overlayCanvas.style.height = `${totalHeight}px`;
+
+      updateMinesCounter();
+      drawVisualOverlays();
+
+      if (currentBoard.isWon) {
+        updateDecisionCallout('Victory!', 'All non-mine cells have been cleared.');
+        stopTimer();
+        updateBotStatus('WON');
+      } else if (currentBoard.isGameOver) {
+        updateDecisionCallout('Game over', 'A mine tile was detonated.');
+        stopTimer();
+        updateBotStatus('LOST');
+      }
+    }
+
+    /* ==========================================================================
+       SECTION 8: BENTO CHARTS (RESTYLED CANVASES)
+       ========================================================================== */
+    function drawScoreTrajectory(finishedClimbs, currentTrajectory, activeStepIndex) {
+      const canvas = dom.climbCanvas;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Hairline gridlines at 6% opacity
+      ctx.strokeStyle = 'rgba(20, 34, 27, 0.06)';
+      ctx.lineWidth = 1;
+      for (let y = 18; y < h; y += 24) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      let maxStep = 20;
+      let maxScore = 6;
+      if (finishedClimbs) {
+        for (let i = 0; i < finishedClimbs.length; i++) {
+          const t = finishedClimbs[i].trajectory;
+          if (t.length > maxStep) maxStep = t.length;
+          for (let j = 0; j < t.length; j++) if (t[j] > maxScore) maxScore = t[j];
+        }
+      }
+      if (currentTrajectory) {
+        if (currentTrajectory.length > maxStep) maxStep = currentTrajectory.length;
+        for (let j = 0; j < currentTrajectory.length; j++) if (currentTrajectory[j] > maxScore) maxScore = currentTrajectory[j];
+      }
+
+      const padLeft = 24;
+      const padBottom = 16;
+      const chartW = w - padLeft - 12;
+      const chartH = h - padBottom - 10;
+
+      function getCoords(s, score) {
+        const x = padLeft + (s / Math.max(1, maxStep - 1)) * chartW;
+        const y = 10 + chartH - (score / Math.max(1, maxScore)) * chartH;
+        return { x, y };
+      }
+
+      // Zero-score line: dashed amber baseline labeled "solved"
+      const yZero = getCoords(0, 0).y;
+      ctx.strokeStyle = 'rgba(224, 145, 47, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(padLeft, yZero);
+      ctx.lineTo(padLeft + chartW, yZero);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#E0912F';
+      ctx.font = '500 9px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('solved (0)', padLeft + chartW, yZero - 4);
+
+      // Thin pale-mint previous climbs
+      if (finishedClimbs) {
+        ctx.lineWidth = 1.2;
+        const trailLimit = Math.min(finishedClimbs.length, CONFIG.maxTrailCurves);
+        for (let i = Math.max(0, finishedClimbs.length - trailLimit); i < finishedClimbs.length; i++) {
+          const c = finishedClimbs[i];
+          ctx.strokeStyle = 'rgba(127, 203, 160, 0.28)';
+          ctx.beginPath();
+          for (let s = 0; s < c.trajectory.length; s++) {
+            const pt = getCoords(s, c.trajectory[s]);
+            if (s === 0) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+          }
+          ctx.stroke();
+
+          const lastS = c.trajectory.length - 1;
+          const pt = getCoords(lastS, c.trajectory[lastS]);
+          ctx.fillStyle = c.finalStatus === 'solved' ? '#1F6B47' : (c.finalStatus === 'stuck' ? '#E0912F' : '#7A877F');
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Current climb: thick forest line with round caps
+      if (currentTrajectory && currentTrajectory.length > 0) {
+        ctx.lineWidth = 2.8;
+        ctx.strokeStyle = '#1F6B47';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (let s = 0; s < currentTrajectory.length; s++) {
+          const pt = getCoords(s, currentTrajectory[s]);
+          if (s === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+
+        // Mint dot marker at latest point
+        const activeS = (activeStepIndex >= 0 && activeStepIndex < currentTrajectory.length) ? activeStepIndex : (currentTrajectory.length - 1);
+        const markerPt = getCoords(activeS, currentTrajectory[activeS]);
+        ctx.fillStyle = '#7FCBA0';
+        ctx.beginPath();
+        ctx.arc(markerPt.x, markerPt.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#1F6B47';
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#7A877F';
+      ctx.font = '500 9px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(maxScore, padLeft - 4, 14);
+      ctx.fillText('0', padLeft - 4, yZero + 3);
+    }
+
+    function drawLandscapeScatter(finishedClimbs) {
+      const canvas = dom.landscapeCanvas;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      if (!finishedClimbs || finishedClimbs.length === 0) {
+        ctx.fillStyle = '#7A877F';
+        ctx.font = '500 11px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Points appear after each finished climb.', w / 2, h / 2);
+        return;
+      }
+
+      let maxScore = 5;
+      for (let i = 0; i < finishedClimbs.length; i++) {
+        if (finishedClimbs[i].finalScore > maxScore) maxScore = finishedClimbs[i].finalScore;
+      }
+
+      const padLeft = 24;
+      const padBottom = 16;
+      const plotW = w - padLeft - 12;
+      const plotH = h - padBottom - 10;
+
+      const yZero = 10 + plotH;
+      ctx.strokeStyle = 'rgba(20, 34, 27, 0.06)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padLeft, yZero);
+      ctx.lineTo(padLeft + plotW, yZero);
+      ctx.stroke();
+
+      for (let i = 0; i < finishedClimbs.length; i++) {
+        const c = finishedClimbs[i];
+        const x = padLeft + (i / Math.max(1, CONFIG.climbsPerGuess - 1)) * plotW;
+        const y = 10 + plotH - (c.finalScore / Math.max(1, maxScore)) * plotH;
+
+        if (c.finalScore === 0) {
+          ctx.fillStyle = '#1F6B47';
+        } else if (c.finalStatus === 'stuck') {
+          ctx.fillStyle = '#E0912F';
+        } else {
+          ctx.fillStyle = '#7A877F';
+        }
+
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#7A877F';
+      ctx.font = '500 9px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(maxScore, padLeft - 4, 14);
+      ctx.fillText('0', padLeft - 4, yZero + 3);
+    }
+
+    function drawNeighborhoodBarChart(data) {
+      const canvas = dom.neighborhoodCanvas;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      if (!data || !data.neighborhoodScores || data.neighborhoodScores.length === 0) {
+        ctx.fillStyle = '#7A877F';
+        ctx.font = '500 11px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Candidate flip scores appear during climbs.', w / 2, h / 2);
+        return;
+      }
+
+      const scores = data.neighborhoodScores;
+      const K = scores.length;
+      let maxScore = Math.max(...scores, data.scoreBefore, 4);
+
+      const padLeft = 24;
+      const padBottom = 18;
+      const chartW = w - padLeft - 10;
+      const chartH = h - padBottom - 14;
+      const barW = Math.max(4, Math.min(16, (chartW / K) - 3));
+
+      // Baseline scoreBefore
+      const baselineY = 14 + chartH - (data.scoreBefore / maxScore) * chartH;
+      ctx.strokeStyle = 'rgba(20, 34, 27, 0.15)';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(padLeft, baselineY);
+      ctx.lineTo(padLeft + chartW, baselineY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      for (let i = 0; i < K; i++) {
+        const score = scores[i];
+        const barH = (score / maxScore) * chartH;
+        const x = padLeft + (i / K) * chartW + (chartW / K - barW) / 2;
+        const y = 14 + chartH - barH;
+
+        const isChosen = (i === data.bestCandidateIndex);
+        ctx.fillStyle = isChosen ? '#0F3D2A' : 'rgba(127, 203, 160, 0.45)';
+
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]);
+        else ctx.fillRect(x, y, barW, barH);
+        ctx.fill();
+
+        if (isChosen) {
+          ctx.strokeStyle = '#1F6B47';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      }
+
+      ctx.fillStyle = '#7A877F';
+      ctx.font = '500 9px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(maxScore, padLeft - 4, 16);
+      ctx.fillText('0', padLeft - 4, h - padBottom + 2);
+    }
+
+    /* ==========================================================================
+       SECTION 9: BENCHMARK SUITE
+       ========================================================================== */
+    async function runBenchmarkGame(algoKey, diffKey) {
+      const { rows, cols, mines } = CONFIG.difficulties[diffKey];
+      const board = createBoard(rows, cols, mines);
+      let guesses = 0;
+      let solutionsSum = 0;
+
+      while (!board.isGameOver && !board.isWon) {
+        if (board.firstClick) {
+          revealCell(board, Math.floor(rows / 2), Math.floor(cols / 2));
+          continue;
+        }
+
+        if (algoKey === 'hill_climbing_only') {
+          guesses++;
+          const { frontierList, constraintsList } = extractFrontierAndConstraints(board);
+          if (frontierList.length === 0) {
+            const unrevealed = [];
+            for (let r = 0; r < rows; r++) {
+              for (let c = 0; c < cols; c++) if (!board.cells[r][c].isRevealed && !board.cells[r][c].isFlagged) unrevealed.push({ r, c });
+            }
+            if (!unrevealed.length) break;
+            revealCell(board, unrevealed[0].r, unrevealed[0].c);
+            continue;
+          }
+
+          const K = frontierList.length;
+          const C_count = constraintsList.length;
+          const remMines = Math.max(0, board.mineCount - board.flagsCount);
+          const density = remMines / Math.max(1, (board.rows * board.cols - board.revealedCount - board.flagsCount));
+
+          const state = new Uint8Array(K);
+          const assignedMines = new Int32Array(C_count);
+          const targetMines = new Int32Array(C_count);
+          for (let i = 0; i < C_count; i++) targetMines[i] = constraintsList[i].targetMines;
+          const fConstraints = frontierList.map(f => new Int32Array(f.constraintIndices));
+          const cFrontier = constraintsList.map(c => new Int32Array(c.frontierIndices));
+
+          const mineCounts = new Int32Array(K);
+          let solCount = 0;
+
+          for (let climb = 0; climb < 60; climb++) {
+            let curM = 0;
+            for (let i = 0; i < K; i++) { state[i] = Math.random() < density ? 1 : 0; curM += state[i]; }
+            assignedMines.fill(0);
+            for (let c = 0; c < C_count; c++) {
+              const fIdxs = cFrontier[c];
+              let sum = 0;
+              for (let i = 0; i < fIdxs.length; i++) sum += state[fIdxs[i]];
+              assignedMines[c] = sum;
+            }
+
+            let vScore = 0;
+            for (let c = 0; c < C_count; c++) vScore += Math.abs(assignedMines[c] - targetMines[c]);
+            let excess = Math.max(0, curM - remMines);
+            let score = vScore + excess;
+
+            let sCount = 0;
+            let step = 0;
+            while (step < 100) {
+              if (score === 0) break;
+              let bestDelta = Infinity;
+              let bestCandidates = [];
+
+              for (let i = 0; i < K; i++) {
+                const delta = state[i] === 0 ? 1 : -1;
+                const touching = fConstraints[i];
+                let dScore = 0;
+                for (let j = 0; j < touching.length; j++) {
+                  const c = touching[j];
+                  dScore += Math.abs((assignedMines[c] + delta) - targetMines[c]) - Math.abs(assignedMines[c] - targetMines[c]);
+                }
+                const candDelta = dScore + (Math.max(0, curM + delta - remMines) - excess);
+                if (candDelta < bestDelta) { bestDelta = candDelta; bestCandidates = [i]; }
+                else if (candDelta === bestDelta) bestCandidates.push(i);
+              }
+
+              if (bestDelta < 0 || (bestDelta === 0 && sCount < 15)) {
+                if (bestDelta < 0) sCount = 0; else sCount++;
+                const flipIdx = bestCandidates[Math.floor(Math.random() * bestCandidates.length)];
+                const delta = state[flipIdx] === 0 ? 1 : -1;
+                state[flipIdx] ^= 1;
+                curM += delta;
+                excess = Math.max(0, curM - remMines);
+                const touching = fConstraints[flipIdx];
+                for (let j = 0; j < touching.length; j++) assignedMines[touching[j]] += delta;
+                score += bestDelta;
+                step++;
+              } else {
+                break;
+              }
+            }
+
+            if (score === 0) {
+              solCount++;
+              for (let i = 0; i < K; i++) if (state[i] === 1) mineCounts[i]++;
+            }
+          }
+
+          solutionsSum += solCount;
+          let chosen = frontierList[0];
+          let chosenAction = 'reveal';
+          let minP = Infinity;
+
+          if (solCount > 0) {
+            for (let i = 0; i < K; i++) {
+              const p = mineCounts[i] / solCount;
+              if (p === 0) { chosen = frontierList[i]; chosenAction = 'reveal'; break; }
+              if (p === 1) { chosen = frontierList[i]; chosenAction = 'flag'; }
+              if (p < minP) { minP = p; chosen = frontierList[i]; }
+            }
+          }
+
+          if (chosenAction === 'reveal') revealCell(board, chosen.r, chosen.c);
+          else toggleFlag(board, chosen.r, chosen.c);
+          continue;
+        }
+
+        const { sureReveals, sureFlags } = findCertainMoves(board);
+        if (sureReveals.length > 0) { revealCell(board, sureReveals[0].r, sureReveals[0].c); continue; }
+        if (sureFlags.length > 0) { toggleFlag(board, sureFlags[0].r, sureFlags[0].c); continue; }
+
+        guesses++;
+        if (algoKey === 'random') {
+          const unrevealed = [];
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) if (!board.cells[r][c].isRevealed && !board.cells[r][c].isFlagged) unrevealed.push({ r, c });
+          }
+          if (!unrevealed.length) break;
+          revealCell(board, unrevealed[0].r, unrevealed[0].c);
+        } else if (algoKey === 'average') {
+          const { frontierList, constraintsList } = extractFrontierAndConstraints(board);
+          let pick = null;
+          let minProb = Infinity;
+          for (let i = 0; i < frontierList.length; i++) {
+            const f = frontierList[i];
+            let sumP = 0;
+            for (let j = 0; j < f.constraintIndices.length; j++) {
+              const c = constraintsList[f.constraintIndices[j]];
+              sumP += Math.max(0, c.targetMines) / Math.max(1, c.frontierIndices.length);
+            }
+            const avgP = sumP / Math.max(1, f.constraintIndices.length);
+            if (avgP < minProb) { minProb = avgP; pick = f; }
+          }
+          if (pick) revealCell(board, pick.r, pick.c);
+          else break;
+        }
+      }
+
+      return { won: board.isWon, guesses, solutionsPerGuess: guesses > 0 ? (solutionsSum / guesses) : 0 };
+    }
+
+    async function runBenchmarkBatch(algoKey, count = 100) {
+      let wins = 0;
+      let totalGuesses = 0;
+      let totalSolPerGuess = 0;
+
+      for (let g = 0; g < count; g++) {
+        const res = await runBenchmarkGame(algoKey, CONFIG.currentDifficulty);
+        if (res.won) wins++;
+        totalGuesses += res.guesses;
+        totalSolPerGuess += res.solutionsPerGuess;
+        if (g % 10 === 0) await new Promise(r => setTimeout(r, 0));
+      }
+
+      return {
+        algoKey,
+        winRate: ((wins / count) * 100).toFixed(1),
+        avgGuesses: (totalGuesses / count).toFixed(1),
+        avgSolPerGuess: (totalSolPerGuess / count).toFixed(1)
+      };
+    }
+
+    function renderBenchmarkChart(comparisonData) {
+      const canvas = dom.benchChart;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const colors = {
+        hill_climbing_only: '#1F6B47',
+        average: '#E0912F',
+        random: '#D9534F'
+      };
+
+      const barHeight = 18;
+      const gap = 8;
+      const startY = 10;
+
+      for (let i = 0; i < comparisonData.length; i++) {
+        const item = comparisonData[i];
+        const y = startY + i * (barHeight + gap);
+        const winPct = parseFloat(item.winRate);
+        const barW = (winPct / 100) * (w - 180);
+
+        ctx.fillStyle = '#7A877F';
+        ctx.font = '600 12px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(item.name, 140, y + 13);
+
+        ctx.fillStyle = 'rgba(20, 34, 27, 0.06)';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(148, y, w - 180, barHeight, 6);
+        else ctx.fillRect(148, y, w - 180, barHeight);
+        ctx.fill();
+
+        ctx.fillStyle = colors[item.algoKey] || '#1F6B47';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(148, y, Math.max(6, barW), barHeight, 6);
+        else ctx.fillRect(148, y, Math.max(6, barW), barHeight);
+        ctx.fill();
+
+        ctx.fillStyle = '#14221B';
+        ctx.font = '700 11px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${winPct}%`, 156 + barW, y + 13);
+      }
+    }
+
+    dom.btnRun100.addEventListener('click', async () => {
+      dom.btnRun100.disabled = true;
+      dom.btnCompareAll.disabled = true;
+      dom.benchResults.style.display = 'block';
+      dom.benchTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--forest); padding:16px;">Running 100 games without animation...</td></tr>';
+
+      const algo = CONFIG.selectedAlgorithm;
+      const names = {
+        hill_climbing_only: 'Hill Climbing Only',
+        hill_climbing: 'Logic + Hill Climbing',
+        average: 'Logic + Average',
+        random: 'Logic + Random'
+      };
+
+      const result = await runBenchmarkBatch(algo, 100);
+      result.name = names[algo] || algo;
+
+      dom.benchTbody.innerHTML = `
+        <tr>
+          <td><strong>${result.name}</strong></td>
+          <td style="color:var(--forest); font-weight:700;">${result.winRate}%</td>
+          <td>${result.avgGuesses}</td>
+          <td>${result.avgSolPerGuess}</td>
+        </tr>
+      `;
+
+      renderBenchmarkChart([result]);
+      dom.btnRun100.disabled = false;
+      dom.btnCompareAll.disabled = false;
+    });
+
+    dom.btnCompareAll.addEventListener('click', async () => {
+      dom.btnRun100.disabled = true;
+      dom.btnCompareAll.disabled = true;
+      dom.benchResults.style.display = 'block';
+      dom.benchTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--forest); padding:16px;">Benchmarking all 3 algorithms (100 games each)...</td></tr>';
+
+      const results = [];
+      const list = [
+        { key: 'hill_climbing_only', name: 'Hill Climbing Only' },
+        { key: 'average', name: 'Logic + Average' },
+        { key: 'random', name: 'Logic + Random' }
+      ];
+
+      for (let i = 0; i < list.length; i++) {
+        dom.benchTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--forest); padding:16px;">Testing ${list[i].name} (${i + 1}/${list.length})...</td></tr>`;
+        const res = await runBenchmarkBatch(list[i].key, 100);
+        res.name = list[i].name;
+        results.push(res);
+      }
+
+      dom.benchTbody.innerHTML = results.map(r => `
+        <tr>
+          <td><strong>${r.name}</strong></td>
+          <td style="color:${r.algoKey === 'hill_climbing_only' ? 'var(--forest)' : 'var(--ink)'}; font-weight:700;">${r.winRate}%</td>
+          <td>${r.avgGuesses}</td>
+          <td>${r.avgSolPerGuess}</td>
+        </tr>
+      `).join('');
+
+      renderBenchmarkChart(results);
+      dom.btnRun100.disabled = false;
+      dom.btnCompareAll.disabled = false;
+    });
+
+    /* ==========================================================================
+       SECTION 10: USER BINDINGS & INIT
+       ========================================================================== */
+    function initGame(diffKey = CONFIG.currentDifficulty) {
+      bot.runId++;
+      bot.resumeCallbacks = [];
+      bot.activeSleepCancel = null;
+      updateBotStatus('READY');
+
+      stopTimer();
+      secondsElapsed = 0;
+      updateTimerDisplay();
+
+      CONFIG.currentDifficulty = diffKey;
+      const { rows, cols, mines } = CONFIG.difficulties[diffKey];
+      currentBoard = createBoard(rows, cols, mines);
+
+      Object.keys(dom.diffButtons).forEach(key => {
+        dom.diffButtons[key].classList.toggle('active', key === diffKey);
+      });
+
+      dom.statusBanner.textContent = '';
+      dom.statusBanner.style.display = 'none';
+
+      bot.liveState = {
+        currentLayout: null,
+        flippedCell: null,
+        frontierList: [],
+        constraintsList: [],
+        probabilityMap: null
+      };
+
+      updateStepCard(0, CONFIG.climbsPerGuess, 0, null, '-', '-', 'ready');
+      updateLiveCounters(0, 0, 0, 0, '0%', '0.0');
+      updateExplainerBox(0, 0, 0, 0, 0, 0, '0%');
+      updateSolutionsTable([]);
+      drawScoreTrajectory([], null, -1);
+      drawLandscapeScatter([]);
+      drawNeighborhoodBarChart(null);
+
+      updateDecisionCallout('Awaiting first move', `Press Start to watch the automated hill-climbing search on ${diffKey.toUpperCase()}.`);
+      renderBoard();
+    }
+
+    function handleCellClick(e) {
+      if (!currentBoard || currentBoard.isGameOver || currentBoard.isWon) return;
+      const cellEl = e.target.closest('.cell');
+      if (!cellEl) return;
+
+      const r = parseInt(cellEl.dataset.r, 10);
+      const c = parseInt(cellEl.dataset.c, 10);
+
+      if (currentBoard.firstClick) startTimer();
+
+      if (bot.status === 'STOPPED') {
+        bot.runId++;
+        bot.resumeCallbacks = [];
+      }
+
+      revealCell(currentBoard, r, c);
+      bot.liveState.currentLayout = null;
+      bot.liveState.flippedCell = null;
+      renderBoard();
+    }
+
+    function handleCellContextMenu(e) {
+      e.preventDefault();
+      if (!currentBoard || currentBoard.isGameOver || currentBoard.isWon) return;
+      const cellEl = e.target.closest('.cell');
+      if (!cellEl) return;
+
+      const r = parseInt(cellEl.dataset.r, 10);
+      const c = parseInt(cellEl.dataset.c, 10);
+
+      if (bot.status === 'STOPPED') {
+        bot.runId++;
+        bot.resumeCallbacks = [];
+      }
+
+      toggleFlag(currentBoard, r, c);
+      renderBoard();
+    }
+
+    function handleCellAuxOrDblClick(e) {
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      if (!currentBoard || currentBoard.isGameOver || currentBoard.isWon) return;
+      const cellEl = e.target.closest('.cell');
+      if (!cellEl) return;
+
+      const r = parseInt(cellEl.dataset.r, 10);
+      const c = parseInt(cellEl.dataset.c, 10);
+
+      chord(currentBoard, r, c);
+      renderBoard();
+    }
+
+    dom.boardGrid.addEventListener('click', handleCellClick);
+    dom.boardGrid.addEventListener('contextmenu', handleCellContextMenu);
+    dom.boardGrid.addEventListener('auxclick', handleCellAuxOrDblClick);
+    dom.boardGrid.addEventListener('dblclick', handleCellAuxOrDblClick);
+
+    dom.faceBtn.addEventListener('click', () => initGame(CONFIG.currentDifficulty));
+    dom.btnStart.addEventListener('click', startBot);
+    dom.btnStop.addEventListener('click', stopBot);
+    dom.btnReset.addEventListener('click', () => initGame(CONFIG.currentDifficulty));
+
+    dom.speedSlider.addEventListener('input', (e) => {
+      CONFIG.speed = parseInt(e.target.value, 10);
+      dom.speedVal.textContent = `${CONFIG.speed}/s`;
+    });
+
+    dom.climbsSlider.addEventListener('input', (e) => {
+      CONFIG.climbsPerGuess = parseInt(e.target.value, 10);
+      dom.climbsVal.textContent = CONFIG.climbsPerGuess;
+    });
+
+    dom.sidewaysSlider.addEventListener('input', (e) => {
+      CONFIG.sidewaysLimit = parseInt(e.target.value, 10);
+      dom.sidewaysVal.textContent = CONFIG.sidewaysLimit;
+    });
+
+    dom.algoSelect.addEventListener('change', (e) => {
+      CONFIG.selectedAlgorithm = e.target.value;
+      updateDecisionCallout(`Mode switched`, `Selected: ${CONFIG.selectedAlgorithm}`);
+    });
+
+    dom.toggleHeatmap.addEventListener('change', drawVisualOverlays);
+    dom.toggleOverlay.addEventListener('change', drawVisualOverlays);
+
+    Object.keys(dom.diffButtons).forEach(diffKey => {
+      dom.diffButtons[diffKey].addEventListener('click', () => initGame(diffKey));
+    });
+
+    window.addEventListener('resize', renderBoard);
+
+    // Initial game launch
+    initGame('beginner');
+  </script>
+</body>
+</html>
